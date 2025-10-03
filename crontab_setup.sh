@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 2025年11月1日に自動プッシュするためのcrontab設定スクリプト
+# 2025年10月1日に自動プッシュするためのcrontab設定スクリプト
 
 echo "crontab設定スクリプト"
 echo "===================="
@@ -13,8 +13,8 @@ echo "プロジェクトディレクトリ: $PROJECT_DIR"
 echo "スクリプトパス: $SCRIPT_PATH"
 echo ""
 
-# 2025年11月1日の午前9時に実行するcrontabエントリを作成
-CRON_ENTRY="0 9 1 11 * $SCRIPT_PATH"
+# 2025年10月1日の午前9時に実行するcrontabエントリを作成
+CRON_ENTRY="0 9 1 10 * $SCRIPT_PATH"
 
 echo "以下のcrontabエントリを追加します:"
 echo "$CRON_ENTRY"
@@ -33,7 +33,7 @@ if [ $? -eq 0 ]; then
     echo "設定内容:"
     crontab -l | grep schedule_push
     echo ""
-    echo "2025年11月1日 午前9:00に自動実行されます"
+    echo "2025年10月1日 午前9:00に自動実行されます"
     echo ""
     echo "手動でテストする場合:"
     echo "  $SCRIPT_PATH"
