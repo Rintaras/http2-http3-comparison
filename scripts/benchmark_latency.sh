@@ -6,15 +6,15 @@ echo "========================================="
 echo ""
 echo "条件:"
 echo "- 帯域: 5Mbps (固定)"
-echo "- 遅延: 0ms, 50ms, 100ms, 150ms"
+echo "- 遅延: 0ms, 25ms, 50ms, 75ms, 100ms, 125ms, 150ms, 175ms, 200ms"
 echo "- パケット損失: 0% (固定)"
 echo "- データサイズ: 1MB (固定)"
-echo "- リクエスト数: 50回/条件"
+echo "- リクエスト数: 25回/条件"
 echo ""
 
 BANDWIDTH="5mbit"
 LOSS="0%"
-ITERATIONS=50
+ITERATIONS=25
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -191,9 +191,14 @@ run_benchmark() {
 }
 
 run_benchmark "0ms" "1. 遅延 0ms (ベースライン)"
-run_benchmark "50ms" "2. 遅延 50ms"
-run_benchmark "100ms" "3. 遅延 100ms"
-run_benchmark "150ms" "4. 遅延 150ms"
+run_benchmark "25ms" "2. 遅延 25ms"
+run_benchmark "50ms" "3. 遅延 50ms"
+run_benchmark "75ms" "4. 遅延 75ms"
+run_benchmark "100ms" "5. 遅延 100ms"
+run_benchmark "125ms" "6. 遅延 125ms"
+run_benchmark "150ms" "7. 遅延 150ms"
+run_benchmark "175ms" "8. 遅延 175ms"
+run_benchmark "200ms" "9. 遅延 200ms"
 
 echo ""
 echo "========================================="
@@ -227,7 +232,7 @@ print("\n=== 統計サマリー ===\n")
 print(f"{'条件':<10} {'プロトコル':<8} {'成功数':<8} {'平均(秒)':<10} {'中央値(秒)':<12} {'標準偏差':<10}")
 print("-" * 70)
 
-for latency in ['0ms', '50ms', '100ms', '150ms']:
+for latency in ['0ms', '25ms', '50ms', '75ms', '100ms', '125ms', '150ms', '175ms', '200ms']:
     for protocol in ['HTTP/2', 'HTTP/3']:
         if latency in data[protocol] and len(data[protocol][latency]) > 0:
             times = data[protocol][latency]

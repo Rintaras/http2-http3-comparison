@@ -69,7 +69,7 @@ def create_comparison_plots(df, stats, output_dir):
         exp_data = stats[stats['experiment'] == experiment]
         for protocol in ['HTTP/2', 'HTTP/3']:
             protocol_data = exp_data[exp_data['protocol'] == protocol]
-            latencies = [0, 50, 100, 150]
+            latencies = [0, 25, 50, 75, 100, 125, 150, 175, 200]
             times = [protocol_data[protocol_data['latency'] == f'{l}ms']['mean_time'].iloc[0] 
                     if len(protocol_data[protocol_data['latency'] == f'{l}ms']) > 0 else 0 
                     for l in latencies]
@@ -87,7 +87,7 @@ def create_comparison_plots(df, stats, output_dir):
         exp_data = stats[stats['experiment'] == experiment]
         for protocol in ['HTTP/2', 'HTTP/3']:
             protocol_data = exp_data[exp_data['protocol'] == protocol]
-            latencies = [0, 50, 100, 150]
+            latencies = [0, 25, 50, 75, 100, 125, 150, 175, 200]
             stds = [protocol_data[protocol_data['latency'] == f'{l}ms']['std_time'].iloc[0] 
                    if len(protocol_data[protocol_data['latency'] == f'{l}ms']) > 0 else 0 
                    for l in latencies]
@@ -105,7 +105,7 @@ def create_comparison_plots(df, stats, output_dir):
         exp_data = stats[stats['experiment'] == experiment]
         for protocol in ['HTTP/2', 'HTTP/3']:
             protocol_data = exp_data[exp_data['protocol'] == protocol]
-            latencies = [0, 50, 100, 150]
+            latencies = [0, 25, 50, 75, 100, 125, 150, 175, 200]
             speeds = [protocol_data[protocol_data['latency'] == f'{l}ms']['mean_speed'].iloc[0] 
                      if len(protocol_data[protocol_data['latency'] == f'{l}ms']) > 0 else 0 
                      for l in latencies]
@@ -145,7 +145,7 @@ def create_comparison_plots(df, stats, output_dir):
     cv_data = []
     for experiment in df['experiment'].unique():
         for protocol in ['HTTP/2', 'HTTP/3']:
-            for latency in ['0ms', '50ms', '100ms', '150ms']:
+            for latency in ['0ms', '25ms', '50ms', '75ms', '100ms', '125ms', '150ms', '175ms', '200ms']:
                 subset = stats[(stats['experiment'] == experiment) & 
                               (stats['protocol'] == protocol) & 
                               (stats['latency'] == latency)]
@@ -163,7 +163,7 @@ def create_comparison_plots(df, stats, output_dir):
         exp_cv = cv_df[cv_df['experiment'] == experiment]
         for protocol in ['HTTP/2', 'HTTP/3']:
             protocol_cv = exp_cv[exp_cv['protocol'] == protocol]
-            latencies = [0, 50, 100, 150]
+            latencies = [0, 25, 50, 75, 100, 125, 150, 175, 200]
             cvs = [protocol_cv[protocol_cv['latency'] == f'{l}ms']['cv'].iloc[0] 
                   if len(protocol_cv[protocol_cv['latency'] == f'{l}ms']) > 0 else 0 
                   for l in latencies]
@@ -226,8 +226,8 @@ def create_detailed_analysis(stats, output_dir):
             else:
                 zero_time = zero_speed = zero_std = 0
             
-            # 150ms遅延での性能
-            high_latency = protocol_data[protocol_data['latency'] == '150ms']
+            # 200ms遅延での性能
+            high_latency = protocol_data[protocol_data['latency'] == '200ms']
             if len(high_latency) > 0:
                 high_time = high_latency['mean_time'].iloc[0]
                 high_speed = high_latency['mean_speed'].iloc[0]
@@ -244,9 +244,9 @@ def create_detailed_analysis(stats, output_dir):
                 '0ms_time': zero_time,
                 '0ms_speed': zero_speed,
                 '0ms_std': zero_std,
-                '150ms_time': high_time,
-                '150ms_speed': high_speed,
-                '150ms_std': high_std,
+                '200ms_time': high_time,
+                '200ms_speed': high_speed,
+                '200ms_std': high_std,
                 'degradation_pct': degradation
             })
     
@@ -259,7 +259,7 @@ def create_detailed_analysis(stats, output_dir):
 
 ## 実験概要
 - 実験数: {len(stats['experiment'].unique())}
-- 各実験の条件: 帯域5Mbps、遅延0-150ms、パケット損失0%、データサイズ1MB、50回試行
+- 各実験の条件: 帯域5Mbps、遅延0-200ms、パケット損失0%、データサイズ1MB、25回試行
 
 ## 主要結果
 

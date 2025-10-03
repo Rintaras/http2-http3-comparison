@@ -96,7 +96,7 @@ tc qdisc add dev eth0 parent 1:10 handle 10: netem delay <LATENCY> loss <LOSS>
 ```
 
 **設定可能なパラメータ:**
-- 遅延: 0ms, 50ms, 100ms, 200ms
+- 遅延: 0ms, 25ms, 50ms, 75ms, 100ms, 125ms, 150ms, 175ms, 200ms
 - パケット損失: 0%, 1%, 5%, 10%
 
 ### 4.2 トラフィック制御の特徴
