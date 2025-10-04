@@ -69,7 +69,7 @@ def create_comparison_plots(df, stats, output_dir):
         exp_data = stats[stats['experiment'] == experiment]
         for protocol in ['HTTP/2', 'HTTP/3']:
             protocol_data = exp_data[exp_data['protocol'] == protocol]
-            latencies = [0, 25, 50, 75, 100, 125, 150, 175, 200]
+            latencies = [0, 50, 100, 150]
             times = [protocol_data[protocol_data['latency'] == f'{l}ms']['mean_time'].iloc[0] 
                     if len(protocol_data[protocol_data['latency'] == f'{l}ms']) > 0 else 0 
                     for l in latencies]
@@ -87,7 +87,7 @@ def create_comparison_plots(df, stats, output_dir):
         exp_data = stats[stats['experiment'] == experiment]
         for protocol in ['HTTP/2', 'HTTP/3']:
             protocol_data = exp_data[exp_data['protocol'] == protocol]
-            latencies = [0, 25, 50, 75, 100, 125, 150, 175, 200]
+            latencies = [0, 50, 100, 150]
             stds = [protocol_data[protocol_data['latency'] == f'{l}ms']['std_time'].iloc[0] 
                    if len(protocol_data[protocol_data['latency'] == f'{l}ms']) > 0 else 0 
                    for l in latencies]
@@ -105,7 +105,7 @@ def create_comparison_plots(df, stats, output_dir):
         exp_data = stats[stats['experiment'] == experiment]
         for protocol in ['HTTP/2', 'HTTP/3']:
             protocol_data = exp_data[exp_data['protocol'] == protocol]
-            latencies = [0, 25, 50, 75, 100, 125, 150, 175, 200]
+            latencies = [0, 50, 100, 150]
             speeds = [protocol_data[protocol_data['latency'] == f'{l}ms']['mean_speed'].iloc[0] 
                      if len(protocol_data[protocol_data['latency'] == f'{l}ms']) > 0 else 0 
                      for l in latencies]
@@ -163,7 +163,7 @@ def create_comparison_plots(df, stats, output_dir):
         exp_cv = cv_df[cv_df['experiment'] == experiment]
         for protocol in ['HTTP/2', 'HTTP/3']:
             protocol_cv = exp_cv[exp_cv['protocol'] == protocol]
-            latencies = [0, 25, 50, 75, 100, 125, 150, 175, 200]
+            latencies = [0, 50, 100, 150]
             cvs = [protocol_cv[protocol_cv['latency'] == f'{l}ms']['cv'].iloc[0] 
                   if len(protocol_cv[protocol_cv['latency'] == f'{l}ms']) > 0 else 0 
                   for l in latencies]
@@ -226,8 +226,8 @@ def create_detailed_analysis(stats, output_dir):
             else:
                 zero_time = zero_speed = zero_std = 0
             
-            # 200ms遅延での性能
-            high_latency = protocol_data[protocol_data['latency'] == '200ms']
+            # 150ms遅延での性能（古い実験データの最高遅延）
+            high_latency = protocol_data[protocol_data['latency'] == '150ms']
             if len(high_latency) > 0:
                 high_time = high_latency['mean_time'].iloc[0]
                 high_speed = high_latency['mean_speed'].iloc[0]
@@ -244,9 +244,9 @@ def create_detailed_analysis(stats, output_dir):
                 '0ms_time': zero_time,
                 '0ms_speed': zero_speed,
                 '0ms_std': zero_std,
-                '200ms_time': high_time,
-                '200ms_speed': high_speed,
-                '200ms_std': high_std,
+                '150ms_time': high_time,
+                '150ms_speed': high_speed,
+                '150ms_std': high_std,
                 'degradation_pct': degradation
             })
     
@@ -259,7 +259,7 @@ def create_detailed_analysis(stats, output_dir):
 
 ## 実験概要
 - 実験数: {len(stats['experiment'].unique())}
-- 各実験の条件: 帯域5Mbps、遅延0-200ms、パケット損失0%、データサイズ1MB、25回試行
+- 各実験の条件: 帯域5Mbps、遅延0-150ms、パケット損失0%、データサイズ1MB、50回試行
 
 ## 主要結果
 
@@ -312,11 +312,11 @@ def create_detailed_analysis(stats, output_dir):
     return summary_df
 
 def main():
-    # 実験結果ファイル
+    # 実験結果ファイル（古い実験データ）
     csv_files = [
-        '/Users/root1/Documents/Research/gRPC_over_HTTP3/protocol_comparison/logs/20251002_104746/benchmark_results.csv',
+        '/Users/root1/Documents/Research/gRPC_over_HTTP3/protocol_comparison/logs/20251001_184348/benchmark_results.csv',
         '/Users/root1/Documents/Research/gRPC_over_HTTP3/protocol_comparison/logs/20251001_211526/benchmark_results.csv',
-        '/Users/root1/Documents/Research/gRPC_over_HTTP3/protocol_comparison/logs/20251001_184348/benchmark_results.csv'
+        '/Users/root1/Documents/Research/gRPC_over_HTTP3/protocol_comparison/logs/20251002_104746/benchmark_results.csv'
     ]
     
     # 出力ディレクトリ
