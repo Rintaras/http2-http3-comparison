@@ -9,12 +9,12 @@ echo "- 帯域: 5Mbps (固定)"
 echo "- 遅延: 0ms, 50ms, 100ms, 150ms"
 echo "- パケット損失: 0% (固定)"
 echo "- データサイズ: 1MB (固定)"
-echo "- リクエスト数: 400回/条件"
+echo "- リクエスト数: 100回/条件"
 echo ""
 
 BANDWIDTH="5mbit"
 LOSS="0%"
-ITERATIONS=400
+ITERATIONS=100
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -53,7 +53,7 @@ run_benchmark() {
     docker exec network-router tc qdisc show dev eth0
     
     echo ""
-    echo "=== HTTP/3テスト (400回) ==="
+    echo "=== HTTP/3テスト (${ITERATIONS}回) ==="
     docker build -f "$PROJECT_ROOT/Dockerfile.http3_test" -t http3-test "$PROJECT_ROOT" 2>&1 | grep -E "(writing|naming)" | tail -2 > /dev/null
     
     local http3_times=()
@@ -121,7 +121,7 @@ run_benchmark() {
     fi
     
     echo ""
-    echo "=== HTTP/2テスト (400回) ==="
+    echo "=== HTTP/2テスト (${ITERATIONS}回) ==="
     
     local http2_times=()
     local http2_speeds=()
