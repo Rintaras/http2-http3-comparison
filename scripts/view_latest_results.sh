@@ -1,8 +1,8 @@
 #!/bin/bash
 
-LATEST_DIR="logs/$(ls -t logs/ 2>/dev/null | head -1)"
+LATEST_DIR="logs/$(ls -t logs/ 2>/dev/null | grep -E '^[0-9]{8}_[0-9]{6}$' | head -1)"
 
-if [ -z "$(ls -A logs/ 2>/dev/null)" ]; then
+if [ -z "$(ls -t logs/ 2>/dev/null | grep -E '^[0-9]{8}_[0-9]{6}$' | head -1)" ]; then
     echo "エラー: ベンチマーク結果が見つかりません"
     echo "まず ./benchmark_latency.sh を実行してください"
     exit 1

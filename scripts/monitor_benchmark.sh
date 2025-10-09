@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
 
 LATEST_LOG="logs/$(ls -t logs/ 2>/dev/null | head -1)"
 

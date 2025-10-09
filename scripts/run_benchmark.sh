@@ -1,5 +1,5 @@
 #!/bin/bash
 
-cd "$(dirname "$0")"
-./benchmark_latency.sh "$@"
+cd "$(dirname "$0")/.."
+./scripts/benchmark_latency.sh "$@"
 
