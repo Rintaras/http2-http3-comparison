@@ -20,26 +20,22 @@ if [ -d "$LATEST_DIR" ]; then
     ls -lh "$LATEST_DIR" | tail -n +2 | awk '{print $9 "\t" $5}'
     
     echo ""
-    echo "=== グラフを開く ==="
+    echo "=== 生成されたグラフ ==="
     
     if [ -f "$LATEST_DIR/response_time_comparison.png" ]; then
-        open "$LATEST_DIR/response_time_comparison.png"
-        echo "✓ 応答速度比較グラフを開きました"
+        echo "✓ 応答速度比較グラフ: $LATEST_DIR/response_time_comparison.png"
     fi
     
     if [ -f "$LATEST_DIR/stability_comparison.png" ]; then
-        open "$LATEST_DIR/stability_comparison.png"
-        echo "✓ 安定性比較グラフを開きました"
+        echo "✓ 安定性比較グラフ: $LATEST_DIR/stability_comparison.png"
     fi
     
     if [ -f "$LATEST_DIR/benchmark_visualization.png" ]; then
-        open "$LATEST_DIR/benchmark_visualization.png"
-        echo "✓ 総合分析グラフを開きました"
+        echo "✓ 総合分析グラフ: $LATEST_DIR/benchmark_visualization.png"
     fi
     
     if [ -f "$LATEST_DIR/benchmark_analysis.png" ]; then
-        open "$LATEST_DIR/benchmark_analysis.png"
-        echo "✓ 詳細分析グラフを開きました"
+        echo "✓ 詳細分析グラフ: $LATEST_DIR/benchmark_analysis.png"
     fi
     
     echo ""
