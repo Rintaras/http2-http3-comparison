@@ -1,4 +1,5 @@
 #!/bin/bash
 
 cd "$(dirname "$0")"
-./scripts/run_benchmark.sh "$@"
+./benchmark_latency.sh "$@"
+
