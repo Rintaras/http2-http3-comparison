@@ -23,7 +23,7 @@ else:
     plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
 
 plt.rcParams['axes.unicode_minus'] = False
-plt.rcParams['figure.figsize'] = (10, 7)
+plt.rcParams['figure.figsize'] = (12, 8)
 plt.rcParams['font.size'] = 12
 
 import os
@@ -39,25 +39,27 @@ df['latency_ms'] = df['latency'].str.replace('ms', '').astype(int)
 latencies = sorted(df['latency_ms'].unique())
 colors = {'HTTP/2': '#2E86AB', 'HTTP/3': '#A23B72'}
 
-fig, ax = plt.subplots(figsize=(10, 7))
+# 2つのサブプロットを作成
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 7))
 
+# 左側: 標準偏差（従来）
 for protocol, color in colors.items():
     data = df[df['protocol'] == protocol]
     stds = [data[data['latency_ms'] == lat]['time_total'].std() for lat in latencies]
-    ax.plot(latencies, stds, marker='o', linewidth=3, markersize=10,
+    ax1.plot(latencies, stds, marker='o', linewidth=3, markersize=10,
             label=protocol, color=color)
 
-ax.set_xlabel('遅延 (ms)', fontsize=14, fontweight='bold')
-ax.set_ylabel('標準偏差 (秒)', fontsize=14, fontweight='bold')
-ax.set_title('標準偏差の比較（安定性指標）\n低い値ほど安定', fontsize=16, fontweight='bold', pad=20)
-ax.legend(fontsize=13, loc='best')
-ax.grid(True, alpha=0.3)
+ax1.set_xlabel('遅延 (ms)', fontsize=14, fontweight='bold')
+ax1.set_ylabel('標準偏差 (秒)', fontsize=14, fontweight='bold')
+ax1.set_title('標準偏差の比較（従来指標）\n低い値ほど安定', fontsize=16, fontweight='bold', pad=20)
+ax1.legend(fontsize=13, loc='best')
+ax1.grid(True, alpha=0.3)
 
 for protocol, color in colors.items():
     data = df[df['protocol'] == protocol]
     stds = [data[data['latency_ms'] == lat]['time_total'].std() for lat in latencies]
     for i, (lat, std) in enumerate(zip(latencies, stds)):
-        ax.annotate(f'{std:.3f}', 
+        ax1.annotate(f'{std:.3f}', 
                    xy=(lat, std), 
                    xytext=(5, 5), 
                    textcoords='offset points',
@@ -65,20 +67,62 @@ for protocol, color in colors.items():
                    color=color,
                    fontweight='bold')
 
-ax.set_xticks(latencies)
-ax.set_xticklabels([f'{lat}ms' for lat in latencies])
+ax1.set_xticks(latencies)
+ax1.set_xticklabels([f'{lat}ms' for lat in latencies])
+
+# 右側: パーセンタイル範囲（P5-P95）
+for protocol, color in colors.items():
+    data = df[df['protocol'] == protocol]
+    p5_values = [data[data['latency_ms'] == lat]['time_total'].quantile(0.05) for lat in latencies]
+    p95_values = [data[data['latency_ms'] == lat]['time_total'].quantile(0.95) for lat in latencies]
+    p50_values = [data[data['latency_ms'] == lat]['time_total'].quantile(0.50) for lat in latencies]
+    
+    # 中央値
+    ax2.plot(latencies, p50_values, marker='o', linewidth=3, markersize=10,
+            label=f'{protocol} (中央値)', color=color)
+    
+    # 95%信頼区間（P5-P95）
+    ranges = [p95 - p5 for p5, p95 in zip(p5_values, p95_values)]
+    ax2.plot(latencies, ranges, marker='s', linewidth=2, markersize=8,
+            label=f'{protocol} (P5-P95範囲)', color=color, linestyle='--', alpha=0.7)
+
+ax2.set_xlabel('遅延 (ms)', fontsize=14, fontweight='bold')
+ax2.set_ylabel('時間 (秒)', fontsize=14, fontweight='bold')
+ax2.set_title('パーセンタイル分析（改善指標）\n95%信頼区間の範囲', fontsize=16, fontweight='bold', pad=20)
+ax2.legend(fontsize=11, loc='best')
+ax2.grid(True, alpha=0.3)
+
+ax2.set_xticks(latencies)
+ax2.set_xticklabels([f'{lat}ms' for lat in latencies])
 
 plt.tight_layout()
-output_file = os.path.join(output_dir, 'stability_comparison.png')
+output_file = os.path.join(output_dir, 'stability_comparison_improved.png')
 plt.savefig(output_file, dpi=300, bbox_inches='tight')
-print(f"グラフを保存しました: {output_file}")
+print(f"改善された安定性グラフを保存しました: {output_file}")
 plt.close()
 
-print("\n=== 標準偏差サマリー ===")
+print("\n=== 標準偏差サマリー（従来指標） ===")
 for lat in latencies:
     http2_std = df[(df['protocol'] == 'HTTP/2') & (df['latency_ms'] == lat)]['time_total'].std()
     http3_std = df[(df['protocol'] == 'HTTP/3') & (df['latency_ms'] == lat)]['time_total'].std()
     ratio = http3_std / http2_std
     winner = "HTTP/2" if http2_std < http3_std else "HTTP/3"
     print(f"{lat}ms: HTTP/2={http2_std:.4f}s, HTTP/3={http3_std:.4f}s, 比={ratio:.2f}倍, 安定性: {winner}")
+
+print("\n=== パーセンタイル分析サマリー（改善指標） ===")
+for lat in latencies:
+    http2_data = df[(df['protocol'] == 'HTTP/2') & (df['latency_ms'] == lat)]['time_total']
+    http3_data = df[(df['protocol'] == 'HTTP/3') & (df['latency_ms'] == lat)]['time_total']
+    
+    http2_p5 = http2_data.quantile(0.05)
+    http2_p95 = http2_data.quantile(0.95)
+    http2_range = http2_p95 - http2_p5
+    
+    http3_p5 = http3_data.quantile(0.05)
+    http3_p95 = http3_data.quantile(0.95)
+    http3_range = http3_p95 - http3_p5
+    
+    ratio = http3_range / http2_range
+    winner = "HTTP/2" if http2_range < http3_range else "HTTP/3"
+    print(f"{lat}ms: HTTP/2範囲={http2_range:.4f}s, HTTP/3範囲={http3_range:.4f}s, 比={ratio:.2f}倍, 安定性: {winner}")
 
