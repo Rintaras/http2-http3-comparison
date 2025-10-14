@@ -4,10 +4,27 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+import matplotlib.font_manager as fm
 from pathlib import Path
 
 sns.set_style("whitegrid")
-plt.rcParams['font.sans-serif'] = ['Arial', 'DejaVu Sans']
+
+# Japanese-capable font auto-detection (prevents mojibake)
+plt.rcParams['font.family'] = 'sans-serif'
+available_fonts = [f.name for f in fm.fontManager.ttflist]
+japanese_fonts = ['Hiragino Sans', 'Hiragino Kaku Gothic Pro', 'Yu Gothic', 'Meiryo', 'MS Gothic', 'AppleGothic']
+selected_font = None
+for font in japanese_fonts:
+    if font in available_fonts:
+        selected_font = font
+        break
+
+if selected_font:
+    plt.rcParams['font.sans-serif'] = [selected_font, 'DejaVu Sans']
+else:
+    plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
+
+plt.rcParams['axes.unicode_minus'] = False
 plt.rcParams['figure.figsize'] = (14, 10)
 plt.rcParams['font.size'] = 10
 
@@ -274,8 +291,7 @@ summary_text += "• 両プロトコルとも100%成功率\n"
 
 ax.text(0.1, 0.5, summary_text, transform=ax.transAxes,
         fontsize=11, verticalalignment='center',
-        bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.3),
-        family='monospace')
+        bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.3))
 ax.axis('off')
 
 plt.tight_layout()
