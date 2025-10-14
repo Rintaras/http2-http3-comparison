@@ -254,8 +254,8 @@ for container in ax.containers:
 ax = axes[1, 1]
 summary_text = "=== ベンチマーク結果サマリー ===\n\n"
 summary_text += f"総リクエスト数: {len(df)}\n"
-summary_text += f"HTTP/2成功率: {len(http2_data)}/200 (100%)\n"
-summary_text += f"HTTP/3成功率: {len(http3_data)}/200 (100%)\n\n"
+summary_text += f"HTTP/2成功率: {len(http2_data)}/100 (100%)\n"
+summary_text += f"HTTP/3成功率: {len(http3_data)}/100 (100%)\n\n"
 
 summary_text += "条件別の勝者:\n"
 for lat in latencies:
