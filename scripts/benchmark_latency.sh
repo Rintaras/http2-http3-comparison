@@ -282,7 +282,8 @@ if [ -f "$PROJECT_ROOT/venv/bin/activate" ]; then
     echo ""
     echo "グラフを開く場合:"
     echo "  open $LOG_DIR/response_time_comparison.png"
-    echo "  open $LOG_DIR/stability_comparison.png"
+    echo "  open $LOG_DIR/stability_comparison_comprehensive.png"
+    echo "  open $LOG_DIR/stability_percentile_range.png"
     echo "  open $LOG_DIR/benchmark_visualization.png"
     echo "  open $LOG_DIR/benchmark_analysis.png"
 else
