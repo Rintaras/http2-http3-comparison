@@ -207,3 +207,35 @@ for lat in latencies:
     overall_winner = "HTTP/2" if http2_wins > http3_wins else "HTTP/3" if http3_wins > http2_wins else "引き分け"
     print(f"{lat}ms: 標準偏差={std_winner}, パーセンタイル={range_winner}, 変動係数={cv_winner} → 総合: {overall_winner}")
 
+"""
+ここから下は、ユーザー要望に基づき「P5-P95範囲のみ」を可視化するスタンドアロンのグラフを生成する。
+上の包括グラフとは独立したファイルとして出力する。
+"""
+
+# パーセンタイル範囲（P5-P95）のみを可視化
+fig, ax = plt.subplots(figsize=(10, 7))
+
+for protocol, color in colors.items():
+    data = df[df['protocol'] == protocol]
+    p5_values = [data[data['latency_ms'] == lat]['time_total'].quantile(0.05) for lat in latencies]
+    p95_values = [data[data['latency_ms'] == lat]['time_total'].quantile(0.95) for lat in latencies]
+    ranges = [p95 - p5 for p5, p95 in zip(p5_values, p95_values)]
+    ax.plot(latencies, ranges, marker='o', linewidth=3, markersize=10,
+            label=protocol, color=color)
+    for lat, r in zip(latencies, ranges):
+        ax.annotate(f"{r:.3f}", xy=(lat, r), xytext=(5, 5), textcoords='offset points',
+                    fontsize=10, color=color, fontweight='bold')
+
+ax.set_xlabel('遅延 (ms)', fontsize=14, fontweight='bold')
+ax.set_ylabel('P5–P95 範囲 (秒)', fontsize=14, fontweight='bold')
+ax.set_title('パーセンタイル範囲のみの比較（P5–P95）\n低いほど安定', fontsize=16, fontweight='bold', pad=20)
+ax.legend(fontsize=13, loc='best')
+ax.grid(True, alpha=0.3)
+ax.set_xticks(latencies)
+ax.set_xticklabels([f'{lat}ms' for lat in latencies])
+
+plt.tight_layout()
+only_range_file = os.path.join(output_dir, 'stability_percentile_range.png')
+plt.savefig(only_range_file, dpi=300, bbox_inches='tight')
+print(f"P5–P95範囲のみのグラフを保存しました: {only_range_file}")
+plt.close()
