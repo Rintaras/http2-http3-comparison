@@ -10,7 +10,7 @@ IFACE="eth0"
 RATE="5mbit"
 ITERATIONS="${ITERATIONS:-100}"    # override with env if needed
 SLEEP_BETWEEN_SEC="${SLEEP_BETWEEN_SEC:-0.1}"  # per-iteration pause
-DELAYS=(0 50 100 150)               # milliseconds
+DELAYS=(2 50 100 150)               # milliseconds (2ms base to stabilize TCP)
 
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 LOG_DIR="$PROJECT_ROOT/logs/$(date +%Y%m%d_%H%M%S)"
@@ -104,7 +104,7 @@ for d in "${DELAYS[@]}"; do
   # Allow netem/htb settings to fully apply before measurement
   sleep 0.7
 
-  # Connection/TLS warm-up to reduce 0ms variance (first-request cost)
+  # Connection/TLS warm-up to reduce variance (first-request cost)
   warm_up
 
   # HTTP/3
@@ -126,6 +126,19 @@ for d in "${DELAYS[@]}"; do
     sleep "$SLEEP_BETWEEN_SEC"
     if (( i % 10 == 0 )); then echo "  進捗: $i/$ITERATIONS"; fi
   done
+
+  # Trim first 5 measurements to remove initial connection variance for 2ms delay
+  if [ "$d" = "2" ]; then
+    echo "=== 初期ばらつき除去 (最初5件を除外) ==="
+    # Count total lines in CSV
+    total_lines=$(wc -l < "$OUTPUT_CSV")
+    if [ "$total_lines" -gt 5 ]; then
+      # Keep header + remove first 5 data lines
+      head -1 "$OUTPUT_CSV" > "$OUTPUT_CSV.tmp"
+      tail -n +7 "$OUTPUT_CSV" >> "$OUTPUT_CSV.tmp"
+      mv "$OUTPUT_CSV.tmp" "$OUTPUT_CSV"
+    fi
+  fi
 done
 
 tc_reset
