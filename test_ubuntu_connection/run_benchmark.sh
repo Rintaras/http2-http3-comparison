@@ -10,7 +10,7 @@ IFACE="eth0"
 RATE="5mbit"
 ITERATIONS="${ITERATIONS:-100}"    # override with env if needed
 SLEEP_BETWEEN_SEC="${SLEEP_BETWEEN_SEC:-0.1}"  # per-iteration pause
-DELAYS=(2 50 100 150)               # milliseconds (2ms base to stabilize TCP)
+DELAYS=(0 50 100 150)               # milliseconds (0ms baseline)
 
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 LOG_DIR="$PROJECT_ROOT/logs/$(date +%Y%m%d_%H%M%S)"
@@ -127,8 +127,8 @@ for d in "${DELAYS[@]}"; do
     if (( i % 10 == 0 )); then echo "  進捗: $i/$ITERATIONS"; fi
   done
 
-  # Trim first 5 measurements to remove initial connection variance for 2ms delay
-  if [ "$d" = "2" ]; then
+  # Trim first 5 measurements to remove initial connection variance for 0ms delay
+  if [ "$d" = "0" ]; then
     echo "=== 初期ばらつき除去 (最初5件を除外) ==="
     # Count total lines in CSV
     total_lines=$(wc -l < "$OUTPUT_CSV")
