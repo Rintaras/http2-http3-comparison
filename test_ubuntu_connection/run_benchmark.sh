@@ -151,8 +151,9 @@ if [ -f "$PROJECT_ROOT/venv/bin/activate" ]; then
   export BENCHMARK_CSV="$OUTPUT_CSV"
   export BENCHMARK_OUTPUT_DIR="$LOG_DIR"
   python3 "$PROJECT_ROOT/scripts/visualize_response_time.py" 2>/dev/null || true
-  python3 "$PROJECT_ROOT/scripts/visualize_stability.py" 2>/dev/null || true
-  python3 "$PROJECT_ROOT/scripts/visualize_results.py" 2>/dev/null || true
+  python3 "$PROJECT_ROOT/scripts/visualize_standard_deviation.py" 2>/dev/null || true
+  python3 "$PROJECT_ROOT/scripts/visualize_percentile_range.py" 2>/dev/null || true
+  python3 "$PROJECT_ROOT/scripts/visualize_boxplot.py" 2>/dev/null || true
 fi
 
 echo "完了: $LOG_DIR"
