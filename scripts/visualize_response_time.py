@@ -56,7 +56,7 @@ for protocol, color in colors.items():
 
 ax.set_xlabel('遅延 (ms)', fontsize=16, fontweight='bold')
 ax.set_ylabel('平均応答時間 (秒)', fontsize=16, fontweight='bold')
-ax.set_title('HTTP/2 vs HTTP/3 応答速度の比較\n(低い値ほど高速)', fontsize=18, fontweight='bold', pad=20)
+ax.set_title('HTTP/2 vs HTTP/3 応答速度の比較', fontsize=18, fontweight='bold', pad=20)
 ax.legend(fontsize=14, loc='upper left', framealpha=0.9)
 ax.grid(True, alpha=0.3, linewidth=1)
 
@@ -78,7 +78,7 @@ ax.set_xticklabels([f'{lat}ms' for lat in latencies], fontsize=13)
 ax.tick_params(axis='y', labelsize=12)
 
 textstr = '※ 塗りつぶし部分は標準偏差の範囲を示す'
-ax.text(0.02, 0.98, textstr, transform=ax.transAxes,
+ax.text(0.02, 0.75, textstr, transform=ax.transAxes,
         fontsize=10, verticalalignment='top',
         bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
 

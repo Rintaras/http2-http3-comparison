@@ -8,29 +8,27 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 import matplotlib.font_manager as fm
+import seaborn as sns
 
-def get_japanese_font_family():
-    """日本語フォントを自動検出"""
-    # macOS
-    if os.uname().sysname == "Darwin":
-        if os.path.exists("/System/Library/Fonts/Hiragino Sans GB.ttc"):
-            return "Hiragino Sans GB"
-        elif os.path.exists("/System/Library/Fonts/ヒラギノ角ゴシック W4.ttc"):
-            return "Hiragino Sans"
-        elif os.path.exists("/Library/Fonts/ヒラギノ角ゴシック W4.ttc"):
-            return "Hiragino Sans"
-    # Linux (Ubuntu/Debian)
-    elif os.path.exists("/usr/share/fonts/opentype/ipafont-gothic/ipaexg.ttf"):
-        return "IPAexGothic"
-    elif os.path.exists("/usr/share/fonts/truetype/takao-gothic/TakaoPGothic.ttf"):
-        return "TakaoPGothic"
-    # Windows
-    elif os.name == 'nt':
-        if os.path.exists("C:/Windows/Fonts/meiryo.ttc"):
-            return "Meiryo"
-        elif os.path.exists("C:/Windows/Fonts/YuGothM.ttc"):
-            return "Yu Gothic"
-    return "sans-serif" # Fallback
+sns.set_style("whitegrid")
+
+plt.rcParams['font.family'] = 'sans-serif'
+available_fonts = [f.name for f in fm.fontManager.ttflist]
+japanese_fonts = ['Hiragino Sans', 'Hiragino Kaku Gothic Pro', 'Yu Gothic', 'Meiryo', 'MS Gothic', 'AppleGothic']
+selected_font = None
+for font in japanese_fonts:
+    if font in available_fonts:
+        selected_font = font
+        break
+
+if selected_font:
+    plt.rcParams['font.sans-serif'] = [selected_font, 'DejaVu Sans']
+else:
+    plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
+
+plt.rcParams['axes.unicode_minus'] = False
+plt.rcParams['figure.figsize'] = (12, 8)
+plt.rcParams['font.size'] = 12
 
 def visualize_boxplot(csv_file, output_dir):
     """転送時間と遅延で箱ひげ図を可視化"""
@@ -41,12 +39,8 @@ def visualize_boxplot(csv_file, output_dir):
     # 遅延条件のリスト
     latencies = ['2ms', '50ms', '100ms', '150ms']
     
-    # 日本語フォント設定
-    plt.rcParams['font.family'] = get_japanese_font_family()
-    plt.rcParams['axes.unicode_minus'] = False
-    
-    # プロトコル別の色設定
-    colors = {'HTTP/2': '#1f77b4', 'HTTP/3': '#9467bd'}
+    # プロトコル別の色設定（response_time_comparisonと同じ色）
+    colors = {'HTTP/2': '#2E86AB', 'HTTP/3': '#A23B72'}
     
     # データを準備
     box_plot_data = []
@@ -63,7 +57,7 @@ def visualize_boxplot(csv_file, output_dir):
                 box_plot_colors.append(colors[protocol])
     
     # グラフを作成
-    fig, ax = plt.subplots(figsize=(14, 8))
+    fig, ax = plt.subplots(figsize=(12, 8))
     
     # 箱ひげ図を描画
     bp = ax.boxplot(box_plot_data, patch_artist=True, showfliers=False, widths=0.6)
@@ -83,12 +77,13 @@ def visualize_boxplot(csv_file, output_dir):
         ax.plot(i + 1, mean_val, 'D', color='red', markersize=8, markeredgecolor='white', markeredgewidth=1)
     
     # グラフの設定
-    ax.set_xlabel('プロトコル・遅延条件', fontsize=14, fontweight='bold')
-    ax.set_ylabel('転送時間 (秒)', fontsize=14, fontweight='bold')
-    ax.set_title('転送時間の分布（箱ひげ図）\n各遅延条件でのプロトコル比較', fontsize=16, fontweight='bold', pad=20)
+    ax.set_xlabel('プロトコル・遅延条件', fontsize=16, fontweight='bold')
+    ax.set_ylabel('転送時間 (秒)', fontsize=16, fontweight='bold')
+    ax.set_title('転送時間の分布（箱ひげ図）', fontsize=18, fontweight='bold', pad=20)
     ax.set_xticks(range(1, len(box_plot_labels) + 1))
-    ax.set_xticklabels(box_plot_labels, fontsize=10)
-    ax.grid(True, alpha=0.3, axis='y')
+    ax.set_xticklabels(box_plot_labels, fontsize=13)
+    ax.grid(True, alpha=0.3, axis='y', linewidth=1)
+    ax.tick_params(axis='y', labelsize=12)
     
     # 凡例を手動で作成
     legend_patches = [
@@ -99,7 +94,7 @@ def visualize_boxplot(csv_file, output_dir):
         plt.Line2D([0], [0], marker='D', color='red', label='平均値',
                    markersize=8, markeredgecolor='white', markeredgewidth=1)
     ]
-    ax.legend(handles=legend_patches, fontsize=12, loc='upper right')
+    ax.legend(handles=legend_patches, fontsize=14, loc='upper right', framealpha=0.9)
     
     # レイアウトを調整
     plt.tight_layout()

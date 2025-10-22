@@ -8,29 +8,27 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 import matplotlib.font_manager as fm
+import seaborn as sns
 
-def get_japanese_font_family():
-    """日本語フォントを自動検出"""
-    # macOS
-    if os.uname().sysname == "Darwin":
-        if os.path.exists("/System/Library/Fonts/Hiragino Sans GB.ttc"):
-            return "Hiragino Sans GB"
-        elif os.path.exists("/System/Library/Fonts/ヒラギノ角ゴシック W4.ttc"):
-            return "Hiragino Sans"
-        elif os.path.exists("/Library/Fonts/ヒラギノ角ゴシック W4.ttc"):
-            return "Hiragino Sans"
-    # Linux (Ubuntu/Debian)
-    elif os.path.exists("/usr/share/fonts/opentype/ipafont-gothic/ipaexg.ttf"):
-        return "IPAexGothic"
-    elif os.path.exists("/usr/share/fonts/truetype/takao-gothic/TakaoPGothic.ttf"):
-        return "TakaoPGothic"
-    # Windows
-    elif os.name == 'nt':
-        if os.path.exists("C:/Windows/Fonts/meiryo.ttc"):
-            return "Meiryo"
-        elif os.path.exists("C:/Windows/Fonts/YuGothM.ttc"):
-            return "Yu Gothic"
-    return "sans-serif" # Fallback
+sns.set_style("whitegrid")
+
+plt.rcParams['font.family'] = 'sans-serif'
+available_fonts = [f.name for f in fm.fontManager.ttflist]
+japanese_fonts = ['Hiragino Sans', 'Hiragino Kaku Gothic Pro', 'Yu Gothic', 'Meiryo', 'MS Gothic', 'AppleGothic']
+selected_font = None
+for font in japanese_fonts:
+    if font in available_fonts:
+        selected_font = font
+        break
+
+if selected_font:
+    plt.rcParams['font.sans-serif'] = [selected_font, 'DejaVu Sans']
+else:
+    plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
+
+plt.rcParams['axes.unicode_minus'] = False
+plt.rcParams['figure.figsize'] = (12, 8)
+plt.rcParams['font.size'] = 12
 
 def visualize_percentile_range(csv_file, output_dir):
     """P5-P95パーセンタイル範囲を可視化"""
@@ -41,12 +39,8 @@ def visualize_percentile_range(csv_file, output_dir):
     # 遅延条件のリスト
     latencies = ['2ms', '50ms', '100ms', '150ms']
     
-    # 日本語フォント設定
-    plt.rcParams['font.family'] = get_japanese_font_family()
-    plt.rcParams['axes.unicode_minus'] = False
-    
-    # プロトコル別の色設定
-    colors = {'HTTP/2': '#1f77b4', 'HTTP/3': '#9467bd'}
+    # プロトコル別の色設定（response_time_comparisonと同じ色）
+    colors = {'HTTP/2': '#2E86AB', 'HTTP/3': '#A23B72'}
     
     # データを準備
     protocols = ['HTTP/2', 'HTTP/3']
@@ -66,28 +60,35 @@ def visualize_percentile_range(csv_file, output_dir):
                 percentile_data[protocol].append(0)
     
     # グラフを作成
-    fig, ax = plt.subplots(figsize=(10, 7))
+    fig, ax = plt.subplots(figsize=(12, 8))
     
     # 折れ線グラフを描画
     for protocol, color in colors.items():
         data = percentile_data[protocol]
-        ax.plot(latencies, data, marker='o', linewidth=3, markersize=10,
-                label=protocol, color=color)
+        ax.plot(latencies, data, marker='o', linewidth=3.5, markersize=12,
+                label=protocol, color=color, zorder=3)
         
         # 各点の上に値を表示
         for lat, value in zip(latencies, data):
             if value > 0:
-                ax.annotate(f'{value:.3f}', xy=(lat, value), xytext=(5, 5),
-                           textcoords='offset points', fontsize=10, color=color, fontweight='bold')
+                ax.annotate(f'{value:.3f}秒', 
+                           xy=(lat, value), 
+                           xytext=(8, -15), 
+                           textcoords='offset points',
+                           fontsize=11,
+                           color=color,
+                           fontweight='bold',
+                           bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor=color, alpha=0.8))
     
     # グラフの設定
-    ax.set_xlabel('遅延 (ms)', fontsize=14, fontweight='bold')
-    ax.set_ylabel('P5-P95範囲 (秒)', fontsize=14, fontweight='bold')
-    ax.set_title('P5-P95パーセンタイル範囲の比較', fontsize=16, fontweight='bold', pad=20)
-    ax.legend(fontsize=13, loc='best')
-    ax.grid(True, alpha=0.3)
+    ax.set_xlabel('遅延 (ms)', fontsize=16, fontweight='bold')
+    ax.set_ylabel('P5-P95範囲 (秒)', fontsize=16, fontweight='bold')
+    ax.set_title('P5-P95パーセンタイル範囲の比較', fontsize=18, fontweight='bold', pad=20)
+    ax.legend(fontsize=14, loc='upper left', framealpha=0.9)
+    ax.grid(True, alpha=0.3, linewidth=1)
     ax.set_xticks(latencies)
-    ax.set_xticklabels([f'{lat}' for lat in latencies])
+    ax.set_xticklabels([f'{lat}' for lat in latencies], fontsize=13)
+    ax.tick_params(axis='y', labelsize=12)
     
     # レイアウトを調整
     plt.tight_layout()

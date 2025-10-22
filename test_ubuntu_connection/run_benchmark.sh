@@ -91,9 +91,29 @@ function warm_up() {
   sleep 0.5
 }
 
+# Initial stabilization with multiple connections
+function initial_stabilization() {
+  local url="$SERVER_BASE/1mb"
+  echo "=== 初期安定化処理 (接続状態を安定化) ==="
+  
+  # Perform multiple warm-up connections for each protocol
+  for i in {1..3}; do
+    echo "  安定化接続 $i/3..."
+    $CURL -sk --http3 "$url" -o /dev/null -m 15 || true
+    $CURL -sk --http2 "$url" -o /dev/null -m 15 || true
+    sleep 1.0  # Longer wait between stabilization connections
+  done
+  
+  echo "  安定化完了"
+  sleep 2.0  # Final wait to ensure all connections are settled
+}
+
 # (removed batch mode; per-iteration to keep request model identical across protocols)
 
 echo "結果保存先: $LOG_DIR"
+
+# Perform initial stabilization before starting measurements
+initial_stabilization
 
 for d in "${DELAYS[@]}"; do
   echo "========================================="
@@ -103,9 +123,6 @@ for d in "${DELAYS[@]}"; do
   tc_setup "$d"
   # Allow netem/htb settings to fully apply before measurement
   sleep 0.7
-
-  # Connection/TLS warm-up to reduce variance (first-request cost)
-  warm_up
 
   # HTTP/3
   echo "=== HTTP/3 (${ITERATIONS}回) ==="
@@ -127,19 +144,8 @@ for d in "${DELAYS[@]}"; do
     if (( i % 10 == 0 )); then echo "  進捗: $i/$ITERATIONS"; fi
   done
 
-  # Trim first 5 measurements to remove initial connection variance for 2ms delay
-  if [ "$d" = "2" ]; then
-    echo "=== 初期ばらつき除去 (最初5件を除外) ==="
-    # Count total lines in CSV
-    total_lines=$(wc -l < "$OUTPUT_CSV")
-    if [ "$total_lines" -gt 5 ]; then
-      # Keep header + remove first 5 data lines
-      head -1 "$OUTPUT_CSV" > "$OUTPUT_CSV.tmp"
-      tail -n +7 "$OUTPUT_CSV" >> "$OUTPUT_CSV.tmp"
-      mv "$OUTPUT_CSV.tmp" "$OUTPUT_CSV"
-    fi
-  fi
 done
+
 
 tc_reset
 

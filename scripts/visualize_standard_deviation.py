@@ -6,10 +6,27 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 import numpy as np
+import matplotlib.font_manager as fm
 
-# 日本語フォント設定
-plt.rcParams['font.family'] = ['Hiragino Sans', 'Yu Gothic', 'Meiryo', 'Takao', 'IPAexGothic', 'IPAPGothic', 'VL PGothic', 'Noto Sans CJK JP']
+sns.set_style("whitegrid")
+
+plt.rcParams['font.family'] = 'sans-serif'
+available_fonts = [f.name for f in fm.fontManager.ttflist]
+japanese_fonts = ['Hiragino Sans', 'Hiragino Kaku Gothic Pro', 'Yu Gothic', 'Meiryo', 'MS Gothic', 'AppleGothic']
+selected_font = None
+for font in japanese_fonts:
+    if font in available_fonts:
+        selected_font = font
+        break
+
+if selected_font:
+    plt.rcParams['font.sans-serif'] = [selected_font, 'DejaVu Sans']
+else:
+    plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
+
 plt.rcParams['axes.unicode_minus'] = False
+plt.rcParams['figure.figsize'] = (12, 8)
+plt.rcParams['font.size'] = 12
 
 def visualize_standard_deviation(csv_file, output_dir):
     """標準偏差と遅延の関係を可視化"""
@@ -21,8 +38,8 @@ def visualize_standard_deviation(csv_file, output_dir):
     latencies = ['0ms', '50ms', '100ms', '150ms']
     lat_values = [0, 50, 100, 150]  # 数値での位置計算用
     
-    # プロトコル別の色設定
-    colors = {'HTTP/2': '#1f77b4', 'HTTP/3': '#9467bd'}
+    # プロトコル別の色設定（response_time_comparisonと同じ色）
+    colors = {'HTTP/2': '#2E86AB', 'HTTP/3': '#A23B72'}
     
     # 各遅延条件での標準偏差を計算
     std_data = []
@@ -45,27 +62,29 @@ def visualize_standard_deviation(csv_file, output_dir):
     # プロトコル別にプロット
     for i, protocol in enumerate(['HTTP/2', 'HTTP/3']):
         ax.plot(lat_values, std_data[i], 
-                marker='o', linewidth=3, markersize=10,
-                label=f'{protocol} (標準偏差)', color=colors[protocol])
+                marker='o', linewidth=3.5, markersize=12,
+                label=protocol, color=colors[protocol], zorder=3)
         
         # 各点に数値を表示
         for j, (lat, std_val) in enumerate(zip(lat_values, std_data[i])):
-            ax.annotate(f'{std_val:.4f}',
+            ax.annotate(f'{std_val:.4f}秒',
                        xy=(lat, std_val),
-                       xytext=(5, 5),
+                       xytext=(8, -15),
                        textcoords='offset points',
-                       fontsize=10,
+                       fontsize=11,
                        color=colors[protocol],
-                       fontweight='bold')
+                       fontweight='bold',
+                       bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor=colors[protocol], alpha=0.8))
     
     # グラフの設定
-    ax.set_xlabel('遅延 (ms)', fontsize=14, fontweight='bold')
-    ax.set_ylabel('標準偏差 (秒)', fontsize=14, fontweight='bold')
-    ax.set_title('標準偏差と遅延の関係\n低い値ほど安定', fontsize=16, fontweight='bold', pad=20)
-    ax.legend(fontsize=13, loc='best')
-    ax.grid(True, alpha=0.3)
+    ax.set_xlabel('遅延 (ms)', fontsize=16, fontweight='bold')
+    ax.set_ylabel('標準偏差 (秒)', fontsize=16, fontweight='bold')
+    ax.set_title('標準偏差と遅延の比較', fontsize=18, fontweight='bold', pad=20)
+    ax.legend(fontsize=14, loc='upper left', framealpha=0.9)
+    ax.grid(True, alpha=0.3, linewidth=1)
     ax.set_xticks(lat_values)
-    ax.set_xticklabels(latencies)
+    ax.set_xticklabels(latencies, fontsize=13)
+    ax.tick_params(axis='y', labelsize=12)
     
     # Y軸の範囲を調整（0から開始）
     ax.set_ylim(bottom=0)
