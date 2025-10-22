@@ -86,7 +86,7 @@ def visualize_stability_percentile(csv_file, output_dir):
     # グラフの設定
     ax.set_xlabel('遅延 (ms)', fontsize=14, fontweight='bold')
     ax.set_ylabel('P5-P95範囲 (秒)', fontsize=14, fontweight='bold')
-    ax.set_title('パーセンタイル範囲のみの比較（P5-P95）\n低い値ほど安定', fontsize=16, fontweight='bold', pad=20)
+    ax.set_title('パーセンタイル範囲のみの比較（P5-P95）', fontsize=16, fontweight='bold', pad=20)
     ax.legend(fontsize=13, loc='best')
     ax.grid(True, alpha=0.3)
     ax.set_xticks(lat_values)
