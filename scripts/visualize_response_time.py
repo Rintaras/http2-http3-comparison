@@ -23,8 +23,8 @@ else:
     plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
 
 plt.rcParams['axes.unicode_minus'] = False
-plt.rcParams['figure.figsize'] = (12, 8)
-plt.rcParams['font.size'] = 12
+plt.rcParams['figure.figsize'] = (20, 6)
+plt.rcParams['font.size'] = 10
 
 import os
 
@@ -60,21 +60,16 @@ ax.set_title('HTTP/2 vs HTTP/3 応答速度の比較', fontsize=18, fontweight='
 ax.legend(fontsize=14, loc='upper left', framealpha=0.9)
 ax.grid(True, alpha=0.3, linewidth=1)
 
-for protocol, color in colors.items():
-    data = df[df['protocol'] == protocol]
-    means = [data[data['latency_ms'] == lat]['time_total'].mean() for lat in latencies]
-    for i, (lat, mean) in enumerate(zip(latencies, means)):
-        ax.annotate(f'{mean:.3f}秒', 
-                   xy=(lat, mean), 
-                   xytext=(8, -15 if i % 2 == 0 else 8), 
-                   textcoords='offset points',
-                   fontsize=11,
-                   color=color,
-                   fontweight='bold',
-                   bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor=color, alpha=0.8))
+# X軸ラベルを間引いて表示（10ms刻みで表示）
+step = 10  # 10ms刻みで表示
+tick_positions = []
+tick_labels = []
+for i in range(0, len(latencies), step):
+    tick_positions.append(latencies[i])
+    tick_labels.append(f'{latencies[i]}ms')
 
-ax.set_xticks(latencies)
-ax.set_xticklabels([f'{lat}ms' for lat in latencies], fontsize=13)
+ax.set_xticks(tick_positions)
+ax.set_xticklabels(tick_labels, fontsize=10)
 ax.tick_params(axis='y', labelsize=12)
 
 textstr = '※ 塗りつぶし部分は標準偏差の範囲を示す'
