@@ -25,8 +25,8 @@ else:
     plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
 
 plt.rcParams['axes.unicode_minus'] = False
-plt.rcParams['figure.figsize'] = (12, 8)
-plt.rcParams['font.size'] = 12
+plt.rcParams['figure.figsize'] = (20, 6)
+plt.rcParams['font.size'] = 10
 
 def visualize_standard_deviation(csv_file, output_dir):
     """標準偏差と遅延の関係を可視化"""
@@ -34,9 +34,14 @@ def visualize_standard_deviation(csv_file, output_dir):
     # CSVファイルを読み込み
     df = pd.read_csv(csv_file)
     
-    # 遅延条件のリスト（文字列形式）
-    latencies = ['0ms', '50ms', '100ms', '150ms']
-    lat_values = [0, 50, 100, 150]  # 数値での位置計算用
+    # 遅延条件を動的に取得（数値でソート）
+    latencies_str = df['latency'].unique()
+    lat_values = [int(lat.replace('ms', '')) for lat in latencies_str]
+    
+    # 数値でソートしてインデックスを取得
+    sorted_indices = sorted(range(len(lat_values)), key=lambda i: lat_values[i])
+    latencies = [latencies_str[i] for i in sorted_indices]
+    lat_values = [lat_values[i] for i in sorted_indices]
     
     # プロトコル別の色設定（response_time_comparisonと同じ色）
     colors = {'HTTP/2': '#2E86AB', 'HTTP/3': '#A23B72'}
@@ -64,17 +69,6 @@ def visualize_standard_deviation(csv_file, output_dir):
         ax.plot(lat_values, std_data[i], 
                 marker='o', linewidth=3.5, markersize=12,
                 label=protocol, color=colors[protocol], zorder=3)
-        
-        # 各点に数値を表示
-        for j, (lat, std_val) in enumerate(zip(lat_values, std_data[i])):
-            ax.annotate(f'{std_val:.4f}秒',
-                       xy=(lat, std_val),
-                       xytext=(8, -15),
-                       textcoords='offset points',
-                       fontsize=11,
-                       color=colors[protocol],
-                       fontweight='bold',
-                       bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor=colors[protocol], alpha=0.8))
     
     # グラフの設定
     ax.set_xlabel('遅延 (ms)', fontsize=16, fontweight='bold')
@@ -82,8 +76,16 @@ def visualize_standard_deviation(csv_file, output_dir):
     ax.set_title('標準偏差と遅延の比較', fontsize=18, fontweight='bold', pad=20)
     ax.legend(fontsize=14, loc='upper left', framealpha=0.9)
     ax.grid(True, alpha=0.3, linewidth=1)
-    ax.set_xticks(lat_values)
-    ax.set_xticklabels(latencies, fontsize=13)
+    # X軸ラベルを間引いて表示（10ms刻みで表示）
+    step = 10  # 10ms刻みで表示
+    tick_positions = []
+    tick_labels = []
+    for i in range(0, len(lat_values), step):
+        tick_positions.append(lat_values[i])
+        tick_labels.append(latencies[i])
+    
+    ax.set_xticks(tick_positions)
+    ax.set_xticklabels(tick_labels, fontsize=10)
     ax.tick_params(axis='y', labelsize=12)
     
     # Y軸の範囲を調整（0から開始）
