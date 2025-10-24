@@ -27,8 +27,8 @@ else:
     plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
 
 plt.rcParams['axes.unicode_minus'] = False
-plt.rcParams['figure.figsize'] = (12, 8)
-plt.rcParams['font.size'] = 12
+plt.rcParams['figure.figsize'] = (20, 6)
+plt.rcParams['font.size'] = 10
 
 def visualize_percentile_range(csv_file, output_dir):
     """P5-P95パーセンタイル範囲を可視化"""
@@ -62,32 +62,28 @@ def visualize_percentile_range(csv_file, output_dir):
     # グラフを作成
     fig, ax = plt.subplots(figsize=(12, 8))
     
-    # 折れ線グラフを描画
-    for protocol, color in colors.items():
-        data = percentile_data[protocol]
-        ax.plot(latencies, data, marker='o', linewidth=3.5, markersize=12,
-                label=protocol, color=color, zorder=3)
-        
-        # 各点の上に値を表示
-        for lat, value in zip(latencies, data):
-            if value > 0:
-                ax.annotate(f'{value:.3f}秒', 
-                           xy=(lat, value), 
-                           xytext=(8, -15), 
-                           textcoords='offset points',
-                           fontsize=11,
-                           color=color,
-                           fontweight='bold',
-                           bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor=color, alpha=0.8))
+    # プロトコル別にプロット
+    for i, protocol in enumerate(['HTTP/2', 'HTTP/3']):
+        ax.plot(latencies, percentile_data[protocol], 
+                marker='o', linewidth=3.5, markersize=12,
+                label=protocol, color=colors[protocol], zorder=3)
     
     # グラフの設定
     ax.set_xlabel('遅延 (ms)', fontsize=16, fontweight='bold')
-    ax.set_ylabel('P5-P95範囲 (秒)', fontsize=16, fontweight='bold')
+    ax.set_ylabel('P5-P95パーセンタイル範囲 (秒)', fontsize=16, fontweight='bold')
     ax.set_title('P5-P95パーセンタイル範囲の比較', fontsize=18, fontweight='bold', pad=20)
     ax.legend(fontsize=14, loc='upper left', framealpha=0.9)
     ax.grid(True, alpha=0.3, linewidth=1)
-    ax.set_xticks(latencies)
-    ax.set_xticklabels([f'{lat}' for lat in latencies], fontsize=13)
+    # X軸ラベルを間引いて表示（10ms刻みで表示）
+    step = 10  # 10ms刻みで表示
+    tick_positions = []
+    tick_labels = []
+    for i in range(0, len(latencies), step):
+        tick_positions.append(latencies[i])
+        tick_labels.append(latencies[i])
+    
+    ax.set_xticks(tick_positions)
+    ax.set_xticklabels(tick_labels, fontsize=10)
     ax.tick_params(axis='y', labelsize=12)
     
     # レイアウトを調整
