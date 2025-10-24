@@ -27,8 +27,8 @@ else:
     plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
 
 plt.rcParams['axes.unicode_minus'] = False
-plt.rcParams['figure.figsize'] = (12, 8)
-plt.rcParams['font.size'] = 12
+plt.rcParams['figure.figsize'] = (30, 6)
+plt.rcParams['font.size'] = 8
 
 def visualize_boxplot(csv_file, output_dir):
     """転送時間と遅延で箱ひげ図を可視化"""
@@ -36,8 +36,13 @@ def visualize_boxplot(csv_file, output_dir):
     # CSVファイルを読み込み
     df = pd.read_csv(csv_file)
     
-    # 遅延条件のリスト
-    latencies = ['2ms', '50ms', '100ms', '150ms']
+    # 遅延条件を動的に取得（数値でソート）
+    latencies_str = df['latency'].unique()
+    lat_values = [int(lat.replace('ms', '')) for lat in latencies_str]
+    
+    # 数値でソートしてインデックスを取得
+    sorted_indices = sorted(range(len(lat_values)), key=lambda i: lat_values[i])
+    latencies = [latencies_str[i] for i in sorted_indices]
     
     # プロトコル別の色設定（response_time_comparisonと同じ色）
     colors = {'HTTP/2': '#2E86AB', 'HTTP/3': '#A23B72'}
@@ -80,8 +85,16 @@ def visualize_boxplot(csv_file, output_dir):
     ax.set_xlabel('プロトコル・遅延条件', fontsize=16, fontweight='bold')
     ax.set_ylabel('転送時間 (秒)', fontsize=16, fontweight='bold')
     ax.set_title('転送時間の分布（箱ひげ図）', fontsize=18, fontweight='bold', pad=20)
-    ax.set_xticks(range(1, len(box_plot_labels) + 1))
-    ax.set_xticklabels(box_plot_labels, fontsize=13)
+    # X軸ラベルを間引いて表示（10ms刻みで表示）
+    step = 10  # 10ms刻みで表示
+    tick_positions = []
+    tick_labels = []
+    for i in range(0, len(box_plot_labels), step):
+        tick_positions.append(i + 1)
+        tick_labels.append(box_plot_labels[i])
+    
+    ax.set_xticks(tick_positions)
+    ax.set_xticklabels(tick_labels, fontsize=8, rotation=90)
     ax.grid(True, alpha=0.3, axis='y', linewidth=1)
     ax.tick_params(axis='y', labelsize=12)
     
