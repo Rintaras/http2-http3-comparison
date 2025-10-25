@@ -11,6 +11,9 @@ services:
       nofile:
         soft: 65536
         hard: 65536
+      nproc:
+        soft: 65536
+        hard: 65536
     cap_add:
       - NET_ADMIN
     cpuset: "0"
@@ -24,7 +27,6 @@ services:
       dockerfile: Dockerfile.router_tc
     ports:
       - "8443:8443/udp"
-      - "8443:8443/tcp"
       - "8444:8444/tcp"
       - "9090:9090/tcp"
     container_name: network-router
@@ -33,6 +35,14 @@ services:
       - http3-server
     cap_add:
       - NET_ADMIN
+    # バッファサイズを大きくして完全なファイル転送を保証
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+      nproc:
+        soft: 65536
+        hard: 65536
     environment:
       - BANDWIDTH=${BANDWIDTH:-100mbit}
       - LATENCY=${LATENCY:-0ms}
@@ -43,3 +53,5 @@ services:
 networks:
   protocol_net:
     driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1500
