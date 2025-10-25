@@ -28,8 +28,13 @@ plt.rcParams['font.size'] = 10
 
 import os
 
-csv_file = os.environ.get('BENCHMARK_CSV', 'benchmark_results_20251001_171222.csv')
-output_dir = os.environ.get('BENCHMARK_OUTPUT_DIR', '.')
+csv_file = os.environ.get('BENCHMARK_CSV')
+output_dir = os.environ.get('BENCHMARK_OUTPUT_DIR')
+
+if not csv_file or not output_dir:
+    print("エラー: BENCHMARK_CSV と BENCHMARK_OUTPUT_DIR 環境変数を設定してください")
+    print("例: BENCHMARK_CSV='logs/latest/benchmark_results.csv' BENCHMARK_OUTPUT_DIR='logs/latest' python3 scripts/visualize_response_time.py")
+    exit(1)
 
 df = pd.read_csv(csv_file)
 
@@ -53,6 +58,19 @@ for protocol, color in colors.items():
                       np.array(means) - np.array(stds), 
                       np.array(means) + np.array(stds), 
                       alpha=0.2, color=color, zorder=1)
+
+# Y軸の範囲を動的に調整
+all_means = []
+for protocol in colors.keys():
+    data = df[df['protocol'] == protocol]
+    means = [data[data['latency_ms'] == lat]['time_total'].mean() for lat in latencies]
+    all_means.extend(means)
+
+if all_means:
+    min_val = min(all_means)
+    max_val = max(all_means)
+    margin = (max_val - min_val) * 0.1
+    ax.set_ylim(max(0, min_val - margin), max_val + margin)
 
 ax.set_xlabel('遅延 (ms)', fontsize=16, fontweight='bold')
 ax.set_ylabel('平均応答時間 (秒)', fontsize=16, fontweight='bold')

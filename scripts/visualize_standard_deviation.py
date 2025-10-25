@@ -69,6 +69,17 @@ def visualize_standard_deviation(csv_file, output_dir):
         ax.plot(lat_values, std_data[i], 
                 marker='o', linewidth=3.5, markersize=12,
                 label=protocol, color=colors[protocol], zorder=3)
+
+    # Y軸の範囲を動的に調整
+    all_stds = []
+    for data in std_data:
+        all_stds.extend(data)
+
+    if all_stds:
+        min_val = min(all_stds)
+        max_val = max(all_stds)
+        margin = (max_val - min_val) * 0.1
+        ax.set_ylim(max(0, min_val - margin), max_val + margin)
     
     # グラフの設定
     ax.set_xlabel('遅延 (ms)', fontsize=16, fontweight='bold')
@@ -112,12 +123,16 @@ if __name__ == "__main__":
         print("ログディレクトリが見つかりません")
         exit(1)
     
-    latest_dir = sorted(log_dirs)[-1]
-    csv_file = os.path.join('logs', latest_dir, 'benchmark_results.csv')
+    csv_file = os.environ.get('BENCHMARK_CSV')
+    output_dir = os.environ.get('BENCHMARK_OUTPUT_DIR')
+    
+    if not csv_file or not output_dir:
+        print("エラー: BENCHMARK_CSV と BENCHMARK_OUTPUT_DIR 環境変数を設定してください")
+        print("例: BENCHMARK_CSV='logs/latest/benchmark_results.csv' BENCHMARK_OUTPUT_DIR='logs/latest' python3 scripts/visualize_standard_deviation.py")
+        exit(1)
     
     if not os.path.exists(csv_file):
         print(f"CSVファイルが見つかりません: {csv_file}")
         exit(1)
     
-    output_dir = os.path.join('logs', latest_dir)
     visualize_standard_deviation(csv_file, output_dir)

@@ -65,8 +65,20 @@ def visualize_percentile_range(csv_file, output_dir):
     # プロトコル別にプロット
     for i, protocol in enumerate(['HTTP/2', 'HTTP/3']):
         ax.plot(latencies, percentile_data[protocol], 
-                marker='o', linewidth=3.5, markersize=12,
-                label=protocol, color=colors[protocol], zorder=3)
+                 marker='o', linewidth=3.5, markersize=12,
+                 label=protocol, color=colors[protocol], zorder=3)
+
+    # Y軸の範囲を動的に調整
+    all_percentiles = []
+    for protocol in ['HTTP/2', 'HTTP/3']:
+        if protocol in percentile_data:
+            all_percentiles.extend(percentile_data[protocol])
+
+    if all_percentiles:
+        min_val = min(all_percentiles)
+        max_val = max(all_percentiles)
+        margin = (max_val - min_val) * 0.1
+        ax.set_ylim(max(0, min_val - margin), max_val + margin)
     
     # グラフの設定
     ax.set_xlabel('遅延 (ms)', fontsize=16, fontweight='bold')
@@ -108,15 +120,13 @@ def visualize_percentile_range(csv_file, output_dir):
             print(f"{lat}: データ不足")
 
 if __name__ == "__main__":
-    # 最新のログディレクトリを取得
-    log_dirs = [d for d in os.listdir('logs') if os.path.isdir(os.path.join('logs', d)) and d.startswith('2025')]
-    if not log_dirs:
-        print("エラー: ログディレクトリが見つかりません。")
-        exit(1)
+    csv_file_path = os.environ.get('BENCHMARK_CSV')
+    output_directory = os.environ.get('BENCHMARK_OUTPUT_DIR')
     
-    latest_log_dir = sorted(log_dirs, reverse=True)[0]
-    csv_file_path = os.path.join('logs', latest_log_dir, 'benchmark_results.csv')
-    output_directory = os.path.join('logs', latest_log_dir)
+    if not csv_file_path or not output_directory:
+        print("エラー: BENCHMARK_CSV と BENCHMARK_OUTPUT_DIR 環境変数を設定してください")
+        print("例: BENCHMARK_CSV='logs/latest/benchmark_results.csv' BENCHMARK_OUTPUT_DIR='logs/latest' python3 scripts/visualize_percentile_range.py")
+        exit(1)
 
     if not os.path.exists(csv_file_path):
         print(f"エラー: CSVファイルが見つかりません: {csv_file_path}")

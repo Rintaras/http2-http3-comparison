@@ -26,8 +26,8 @@ if [ -d "$LATEST_DIR" ]; then
         echo "✓ 応答速度比較グラフ: $LATEST_DIR/response_time_comparison.png"
     fi
     
-    if [ -f "$LATEST_DIR/stability_standard_deviation.png" ]; then
-        echo "✓ 標準偏差線グラフ: $LATEST_DIR/stability_standard_deviation.png"
+    if [ -f "$LATEST_DIR/standard_deviation_vs_latency.png" ]; then
+        echo "✓ 標準偏差線グラフ: $LATEST_DIR/standard_deviation_vs_latency.png"
     fi
     
     if [ -f "$LATEST_DIR/stability_percentile_range.png" ]; then
@@ -38,8 +38,8 @@ if [ -d "$LATEST_DIR" ]; then
         echo "✓ 転送時間箱ひげ図: $LATEST_DIR/transfer_time_boxplot.png"
     fi
     
-    if [ -f "$LATEST_DIR/benchmark_analysis.png" ]; then
-        echo "✓ 詳細分析グラフ: $LATEST_DIR/benchmark_analysis.png"
+    if [ -f "$LATEST_DIR/detailed_analysis_report.txt" ]; then
+        echo "✓ 詳細分析レポート: $LATEST_DIR/detailed_analysis_report.txt"
     fi
     
     echo ""

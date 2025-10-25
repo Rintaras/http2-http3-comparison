@@ -66,6 +66,17 @@ def visualize_boxplot(csv_file, output_dir):
     
     # 箱ひげ図を描画
     bp = ax.boxplot(box_plot_data, patch_artist=True, showfliers=False, widths=0.6)
+
+    # Y軸の範囲を動的に調整
+    all_values = []
+    for data in box_plot_data:
+        all_values.extend(data)
+
+    if all_values:
+        min_val = min(all_values)
+        max_val = max(all_values)
+        margin = (max_val - min_val) * 0.1
+        ax.set_ylim(max(0, min_val - margin), max_val + margin)
     
     # 箱の色を設定
     for patch, color in zip(bp['boxes'], box_plot_colors):
@@ -130,15 +141,13 @@ def visualize_boxplot(csv_file, output_dir):
             print(f"{label}: 平均={mean_val:.3f}s, 中央値={median:.3f}s, Q1={q1:.3f}s, Q3={q3:.3f}s, 標準偏差={std_val:.3f}s")
 
 if __name__ == "__main__":
-    # 最新のログディレクトリを取得
-    log_dirs = [d for d in os.listdir('logs') if os.path.isdir(os.path.join('logs', d)) and d.startswith('2025')]
-    if not log_dirs:
-        print("エラー: ログディレクトリが見つかりません。")
-        exit(1)
+    csv_file_path = os.environ.get('BENCHMARK_CSV')
+    output_directory = os.environ.get('BENCHMARK_OUTPUT_DIR')
     
-    latest_log_dir = sorted(log_dirs, reverse=True)[0]
-    csv_file_path = os.path.join('logs', latest_log_dir, 'benchmark_results.csv')
-    output_directory = os.path.join('logs', latest_log_dir)
+    if not csv_file_path or not output_directory:
+        print("エラー: BENCHMARK_CSV と BENCHMARK_OUTPUT_DIR 環境変数を設定してください")
+        print("例: BENCHMARK_CSV='logs/latest/benchmark_results.csv' BENCHMARK_OUTPUT_DIR='logs/latest' python3 scripts/visualize_boxplot.py")
+        exit(1)
 
     if not os.path.exists(csv_file_path):
         print(f"エラー: CSVファイルが見つかりません: {csv_file_path}")
