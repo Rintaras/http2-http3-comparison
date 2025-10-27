@@ -227,3 +227,4 @@ RUN autoreconf -fi && \
 - curl標準がHTTP/3未対応 → カスタムビルド版・Goクライアント
 - ビルド複雑性 → Docker化・事前ビルド提供
 - 依存性管理 → コンテナ・venv 利用
+
