@@ -68,6 +68,18 @@ def visualize_percentile_range(csv_file, output_dir):
                  marker='o', linewidth=3.5, markersize=12,
                  label=protocol, color=colors[protocol], zorder=3)
 
+        # 主要な遅延ポイントに値を注記（2/50/100/150ms）
+        target_labels = {"2ms", "50ms", "100ms", "150ms"}
+        for lat, val in zip(latencies, percentile_data[protocol]):
+            if lat in target_labels and val is not None and float(val) > 0:
+                ax.annotate(f"{val:.4f}秒",
+                            xy=(lat, val),
+                            xytext=(6, -10),
+                            textcoords='offset points',
+                            fontsize=9,
+                            color=colors[protocol],
+                            bbox=dict(boxstyle='round,pad=0.2', facecolor='white', edgecolor=colors[protocol], alpha=0.7))
+
     # Y軸の範囲を動的に調整
     all_percentiles = []
     for protocol in ['HTTP/2', 'HTTP/3']:
