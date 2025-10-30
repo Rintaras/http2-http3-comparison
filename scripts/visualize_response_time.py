@@ -59,6 +59,18 @@ for protocol, color in colors.items():
                       np.array(means) + np.array(stds), 
                       alpha=0.2, color=color, zorder=1)
 
+    # 主要な遅延ポイントに値を注記（0/2/50/100/150ms が存在する場合のみ）
+    target_ms = {0, 2, 50, 100, 150}
+    for lat, mean in zip(latencies, means):
+        if lat in target_ms and not np.isnan(mean):
+            ax.annotate(f"{mean:.3f}秒",
+                        xy=(lat, mean),
+                        xytext=(6, -10),
+                        textcoords='offset points',
+                        fontsize=9,
+                        color=color,
+                        bbox=dict(boxstyle='round,pad=0.2', facecolor='white', edgecolor=color, alpha=0.7))
+
 # Y軸の範囲を動的に調整
 all_means = []
 for protocol in colors.keys():
