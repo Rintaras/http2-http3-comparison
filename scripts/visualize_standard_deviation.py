@@ -70,6 +70,20 @@ def visualize_standard_deviation(csv_file, output_dir):
                 marker='o', linewidth=3.5, markersize=12,
                 label=protocol, color=colors[protocol], zorder=3)
 
+        # 主要な遅延ポイントに値を注記（0/2/50/100/150ms が存在する場合のみ）
+        target_ms = {0, 2, 50, 100, 150}
+        lat_to_std = {lv: sv for lv, sv in zip(lat_values, std_data[i])}
+        for t in sorted(target_ms):
+            if t in lat_to_std and lat_to_std[t] is not None:
+                val = float(lat_to_std[t])
+                ax.annotate(f"{val:.4f}秒",
+                            xy=(t, val),
+                            xytext=(6, -10),
+                            textcoords='offset points',
+                            fontsize=9,
+                            color=colors[protocol],
+                            bbox=dict(boxstyle='round,pad=0.2', facecolor='white', edgecolor=colors[protocol], alpha=0.7))
+
     # Y軸の範囲を動的に調整
     all_stds = []
     for data in std_data:
