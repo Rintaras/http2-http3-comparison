@@ -15,8 +15,14 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_ROOT"
 
 # 設定: 実測的なベンチマーク
-# 0ms から 150ms まで 1ms 刻みで全遅延条件を測定
-DELAYS=($(seq 0 1 150))
+# デフォルトは 0-150ms の1ms刻みだが、環境変数 DELAYS が指定されていればそれを優先
+if [ -n "$DELAYS" ]; then
+    # 例: DELAYS="2 50 100 150"
+    # shellcheck disable=SC2206
+    DELAYS=($DELAYS)
+else
+    DELAYS=($(seq 0 1 150))
+fi
 ITERATIONS="${ITERATIONS:-25}"
 SLEEP_BETWEEN_SEC=0.1
 
@@ -33,7 +39,11 @@ echo "timestamp,protocol,latency,iteration,time_total,speed_kbps,success,http_ve
 echo "========================================="
 echo "Docker環境ベンチマーク開始 (実測的版)"
 echo "========================================="
-echo "遅延条件: ${#DELAYS[@]}個 (0ms-150ms, 1ms刻み)"
+if [ ${#DELAYS[@]} -le 10 ]; then
+    echo "遅延条件: ${#DELAYS[@]}個 (${DELAYS[*]}ms)"
+else
+    echo "遅延条件: ${#DELAYS[@]}個 (0ms-150ms, 1ms刻み)"
+fi
 echo "反復回数: $ITERATIONS回"
 echo "出力先: $LOG_DIR"
 echo ""
