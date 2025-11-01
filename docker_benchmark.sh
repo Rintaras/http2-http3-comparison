@@ -86,6 +86,16 @@ for i in {1..5}; do
     fi
 done
 
+# HTTP/3クライアント可用性チェック（router内のcurlはHTTP/3未対応の可能性あり）
+H3_CLIENT_AVAILABLE=false
+if docker exec network-router curl -V 2>/dev/null | grep -qi "HTTP3"; then
+    H3_CLIENT_AVAILABLE=true
+fi
+if [ "$H3_CLIENT_AVAILABLE" != true ]; then
+    echo "警告: router内のcurlはHTTP/3未対応です。H3計測は実際にHTTP/3にならない可能性があります。" >&2
+    echo "       H3行で http_version!=3 の結果は自動的に除外（success=0）します。" >&2
+fi
+
 # 初期安定化（ウォームアップ）
 echo "初期安定化実行中..."
 for i in {1..5}; do
@@ -127,8 +137,14 @@ function bench_once() {
                 if [ "$warmup" != "true" ]; then
                     local proto_name
                     proto_name=$([ "$proto" = "H2" ] && echo "HTTP/2" || echo "HTTP/3")
-                    # 実際に使用されたHTTPバージョンを記録
-                    echo "$ts,$proto_name,$latency_lbl,$i,$t,$kb,1,$http_version" >> "$OUTPUT_CSV"
+                    # H3指定だが実際はHTTP/3でない場合は不正データとして記録しない
+                    if [ "$proto" = "H3" ] && [ "$http_version" != "3" ]; then
+                        echo "[WARN] H3測定で http_version=$http_version を検出。HTTP/3未使用のためこの結果は除外します (latency=$latency_lbl iter=$i)" >&2
+                        echo "$ts,$proto_name,$latency_lbl,$i,,,0,$http_version" >> "$OUTPUT_CSV"
+                    else
+                        # 実際に使用されたHTTPバージョンを記録
+                        echo "$ts,$proto_name,$latency_lbl,$i,$t,$kb,1,$http_version" >> "$OUTPUT_CSV"
+                    fi
                 fi
                 return 0
             fi
