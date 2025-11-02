@@ -8,23 +8,26 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 import matplotlib.font_manager as fm
+import os
 import seaborn as sns
 
 sns.set_style("whitegrid")
 
 plt.rcParams['font.family'] = 'sans-serif'
-available_fonts = [f.name for f in fm.fontManager.ttflist]
-japanese_fonts = ['Hiragino Sans', 'Hiragino Kaku Gothic Pro', 'Yu Gothic', 'Meiryo', 'MS Gothic', 'AppleGothic']
-selected_font = None
-for font in japanese_fonts:
-    if font in available_fonts:
-        selected_font = font
-        break
-
-if selected_font:
-    plt.rcParams['font.sans-serif'] = [selected_font, 'DejaVu Sans']
+if os.environ.get('FAST_PLOT') == '1':
+    plt.rcParams['font.sans-serif'] = ['Hiragino Sans', 'Yu Gothic', 'Meiryo', 'DejaVu Sans']
 else:
-    plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
+    available_fonts = [f.name for f in fm.fontManager.ttflist]
+    japanese_fonts = ['Hiragino Sans', 'Hiragino Kaku Gothic Pro', 'Yu Gothic', 'Meiryo', 'MS Gothic', 'AppleGothic']
+    selected_font = None
+    for font in japanese_fonts:
+        if font in available_fonts:
+            selected_font = font
+            break
+    if selected_font:
+        plt.rcParams['font.sans-serif'] = [selected_font, 'DejaVu Sans']
+    else:
+        plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
 
 plt.rcParams['axes.unicode_minus'] = False
 plt.rcParams['figure.figsize'] = (30, 6)
