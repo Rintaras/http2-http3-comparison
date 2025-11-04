@@ -5,22 +5,26 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 import matplotlib.font_manager as fm
+import os
 
 sns.set_style("whitegrid")
 
 plt.rcParams['font.family'] = 'sans-serif'
-available_fonts = [f.name for f in fm.fontManager.ttflist]
-japanese_fonts = ['Hiragino Sans', 'Hiragino Kaku Gothic Pro', 'Yu Gothic', 'Meiryo', 'MS Gothic', 'AppleGothic']
-selected_font = None
-for font in japanese_fonts:
-    if font in available_fonts:
-        selected_font = font
-        break
-
-if selected_font:
-    plt.rcParams['font.sans-serif'] = [selected_font, 'DejaVu Sans']
+# Fast mode: skip font scanning to speed up
+if os.environ.get('FAST_PLOT') == '1':
+    plt.rcParams['font.sans-serif'] = ['Hiragino Sans', 'Yu Gothic', 'Meiryo', 'DejaVu Sans']
 else:
-    plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
+    available_fonts = [f.name for f in fm.fontManager.ttflist]
+    japanese_fonts = ['Hiragino Sans', 'Hiragino Kaku Gothic Pro', 'Yu Gothic', 'Meiryo', 'MS Gothic', 'AppleGothic']
+    selected_font = None
+    for font in japanese_fonts:
+        if font in available_fonts:
+            selected_font = font
+            break
+    if selected_font:
+        plt.rcParams['font.sans-serif'] = [selected_font, 'DejaVu Sans']
+    else:
+        plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
 
 plt.rcParams['axes.unicode_minus'] = False
 plt.rcParams['figure.figsize'] = (20, 6)
@@ -63,13 +67,22 @@ for protocol, color in colors.items():
     target_ms = {0, 2, 50, 100, 150}
     for lat, mean in zip(latencies, means):
         if lat in target_ms and not np.isnan(mean):
-            ax.annotate(f"{mean:.3f}秒",
+            # 数値をより見やすく表示（プロトコルごとに垂直・水平方向にずらして重なりを防ぐ）
+            if protocol == 'HTTP/2':
+                offset_x = -8  # 左にずらす
+                offset_y = 20  # 上に配置
+            else:  # HTTP/3
+                offset_x = 8   # 右にずらす
+                offset_y = 30  # より上に配置
+            ax.annotate(f"{mean:.3f}s",
                         xy=(lat, mean),
-                        xytext=(6, -10),
+                        xytext=(offset_x, offset_y),
                         textcoords='offset points',
-                        fontsize=9,
+                        fontsize=11,
+                        fontweight='bold',
                         color=color,
-                        bbox=dict(boxstyle='round,pad=0.2', facecolor='white', edgecolor=color, alpha=0.7))
+                        ha='center',
+                        bbox=dict(boxstyle='round,pad=0.4', facecolor='white', edgecolor=color, linewidth=1.5, alpha=0.9))
 
 # Y軸の範囲を動的に調整
 all_means = []
@@ -90,16 +103,24 @@ ax.set_title('HTTP/2 vs HTTP/3 応答速度の比較', fontsize=18, fontweight='
 ax.legend(fontsize=14, loc='upper left', framealpha=0.9)
 ax.grid(True, alpha=0.3, linewidth=1)
 
-# X軸ラベルを間引いて表示（10ms刻みで表示）
-step = 10  # 10ms刻みで表示
+# X軸に実施したベンチマーク（0/2/50/100/150ms）を明示的に表示
+benchmark_delays = {0, 2, 50, 100, 150}
 tick_positions = []
 tick_labels = []
-for i in range(0, len(latencies), step):
-    tick_positions.append(latencies[i])
-    tick_labels.append(f'{latencies[i]}ms')
+
+# 実施したベンチマークの遅延値を優先的に表示
+for lat in latencies:
+    if lat in benchmark_delays:
+        tick_positions.append(lat)
+        tick_labels.append(f'{lat}ms')
+    elif len(tick_positions) == 0 or lat - tick_positions[-1] >= 10:
+        # ベンチマーク以外は10ms刻みで間引く
+        tick_positions.append(lat)
+        tick_labels.append(f'{lat}ms')
 
 ax.set_xticks(tick_positions)
-ax.set_xticklabels(tick_labels, fontsize=10)
+# X軸ラベルを回転させて重なりを防ぐ
+ax.set_xticklabels(tick_labels, fontsize=11, fontweight='bold', rotation=45, ha='right')
 ax.tick_params(axis='y', labelsize=12)
 
 textstr = '※ 塗りつぶし部分は標準偏差の範囲を示す'
