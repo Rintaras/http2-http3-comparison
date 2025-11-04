@@ -56,28 +56,28 @@ docker-compose -f docker-compose.router_tc.yml up -d
 echo "サービス起動を待機中..."
 sleep 10
 
-# 接続テスト
+# 接続テスト（サーバーに直接接続）
 echo "接続テスト中..."
 # 複数回試行して接続を確認
 for i in {1..5}; do
     http2_ok=false
     http3_ok=false
     
-    # HTTP/2 テスト (TCP)
-    if curl -k -s --connect-timeout 10 --max-time 15 --http2 https://localhost:8444/ >/dev/null 2>&1; then
+    # HTTP/2 テスト (TCP) - サーバーに直接接続
+    if curl -k -s --connect-timeout 10 --max-time 15 --http2 https://localhost:8443/1mb >/dev/null 2>&1; then
         http2_ok=true
     fi
     
-    # HTTP/3 テスト (UDP) - curl --http3 が利用可能な場合のみ
-    if curl -k -s --connect-timeout 10 --max-time 15 https://localhost:8443/ >/dev/null 2>&1; then
+    # HTTP/3 テスト (UDP) - サーバーに直接接続
+    if curl -k -s --connect-timeout 10 --max-time 15 --http3 https://localhost:8443/1mb >/dev/null 2>&1; then
         http3_ok=true
     fi
     
-    if [ "$http2_ok" = true ]; then
-        echo "✓ HTTP/2接続確認完了 (試行 $i/5)"
+    if [ "$http2_ok" = true ] && [ "$http3_ok" = true ]; then
+        echo "✓ HTTP/2とHTTP/3接続確認完了 (試行 $i/5)"
         break
     elif [ $i -eq 5 ]; then
-        echo "警告: HTTP/2接続テストに失敗しましたが、ベンチマークを続行します"
+        echo "警告: 接続テストに失敗しましたが、ベンチマークを続行します"
         echo "Docker環境ログ:"
         docker-compose -f docker-compose.router_tc.yml logs --tail=20
     else
@@ -86,21 +86,11 @@ for i in {1..5}; do
     fi
 done
 
-# HTTP/3クライアント可用性チェック（router内のcurlはHTTP/3未対応の可能性あり）
-H3_CLIENT_AVAILABLE=false
-if docker exec network-router curl -V 2>/dev/null | grep -qi "HTTP3"; then
-    H3_CLIENT_AVAILABLE=true
-fi
-if [ "$H3_CLIENT_AVAILABLE" != true ]; then
-    echo "警告: router内のcurlはHTTP/3未対応です。H3計測は実際にHTTP/3にならない可能性があります。" >&2
-    echo "       H3行で http_version!=3 の結果は自動的に除外（success=0）します。" >&2
-fi
-
 # 初期安定化（ウォームアップ）
 echo "初期安定化実行中..."
 for i in {1..5}; do
-    curl -k -s https://localhost:8443/ >/dev/null 2>&1 || true  # HTTP/3 (UDP)
-    curl -k -s --http2 https://localhost:8444/ >/dev/null 2>&1 || true  # HTTP/2 (TCP)
+    curl -k -s --http3 https://localhost:8443/1mb >/dev/null 2>&1 || true  # HTTP/3 (UDP)
+    curl -k -s --http2 https://localhost:8443/1mb >/dev/null 2>&1 || true  # HTTP/2 (TCP)
     sleep 0.5
 done
 
@@ -117,21 +107,43 @@ function bench_once() {
     local kb=""
     
     if [ "$proto" = "H3" ]; then
-        # HTTP/3: UDP ポート 8443（直接接続、tcフィルタリング経由）
-        # Docker コンテナ内から直接接続する場合のコマンド
-        # ホスト側から接続する場合: localhost:8443/udp
-        out=$(docker exec network-router curl -k -s -w "%{time_total},%{speed_download},%{http_version}" -o /dev/null --connect-timeout 10 --max-time 30 https://http3-server:8443/ 2>/dev/null || echo "")
+        # HTTP/3: UDP ポート 8443（サーバーに直接接続、ホスト側から）
+        # ホスト側のhttp3_clientを使用（存在する場合）、なければコンテナ内のものを使用
+        if [ -f "./http3_client" ]; then
+            # ホスト側から直接接続（tc制限が適用される）
+            out=$(./http3_client https://localhost:8443/1mb 2>/dev/null || echo "")
+        else
+            # フォールバック: コンテナ内から実行（ただし、tc制限を受けない可能性がある）
+            echo "[WARN] ホスト側のhttp3_clientが見つかりません。コンテナ内から実行しますが、tc制限を受けない可能性があります。" >&2
+            out=$(docker exec http3-server /root/http3_client https://localhost:8443/1mb 2>/dev/null || echo "")
+        fi
     else
-        # HTTP/2: TCP ポート 8444（ルーター経由で tcフィルタリング対象）
-        out=$(curl -k -s -w "%{time_total},%{speed_download},%{http_version}" -o /dev/null --connect-timeout 10 --max-time 30 --http2 https://localhost:8444/ 2>/dev/null || echo "")
+        # HTTP/2: TCP ポート 8443（サーバーに直接接続）
+        # 1MBデータ転送（size_downloadも取得して検証）
+        out=$(curl -k -s -w "%{time_total},%{speed_download},%{http_version},%{size_download}" -o /dev/null --connect-timeout 10 --max-time 30 --http2 https://localhost:8443/1mb 2>/dev/null || echo "")
     fi
     
     if [ -n "$out" ]; then
         t=$(echo "$out" | cut -d',' -f1)
         local speed=$(echo "$out" | cut -d',' -f2)
         local http_version=$(echo "$out" | cut -d',' -f3)
+        local size_download=$(echo "$out" | cut -d',' -f4)
+        # 転送サイズが1MB未満の場合は警告
+        if [ -n "$size_download" ] && [ "$size_download" -lt 1048576 ] && [ "$proto" = "H2" ]; then
+            echo "[WARN] H2測定で不完全な転送を検出: size_download=$size_download bytes (期待値: 1048576 bytes) (latency=$latency_lbl iter=$i)" >&2
+        fi
         if [ -n "$t" ] && [ -n "$speed" ]; then
-            kb=$(echo "scale=2; $speed / 1000" | bc -l)
+            # curlのspeed_downloadはバイト/秒
+            # size_downloadが利用可能で1MB以上の場合、それから速度を再計算（より正確）
+            if [ -n "$size_download" ] && [ "$size_download" -ge 1048576 ] && [ -n "$t" ] && (( $(echo "$t > 0" | bc -l) )); then
+                # 速度 = (バイト数 * 8) / 時間（秒） → kbps
+                speed_kbps=$(echo "scale=2; ($size_download * 8) / ($t * 1000)" | bc -l)
+            else
+                # size_downloadが取得できない場合、curlのspeed_downloadを使用（バイト/秒 → kbps）
+                # speed_downloadはバイト/秒なので、kbpsに変換: (bytes/sec * 8) / 1000
+                speed_kbps=$(echo "scale=2; ($speed * 8) / 1000" | bc -l)
+            fi
+            kb="$speed_kbps"
             if [ -n "$kb" ]; then
                 # warm-upモードでない場合のみCSVに記録
                 if [ "$warmup" != "true" ]; then
@@ -160,14 +172,14 @@ function bench_once() {
     return 1
 }
 
-# 遅延設定関数
+# 遅延設定関数（実機環境と同じ：サーバー側のみでtc設定）
 function set_docker_latency() {
     local delay_ms="$1"
     
-    # Docker環境での遅延設定
+    # Docker環境での遅延設定（サーバーコンテナ内でtc設定を適用、実機環境と同じ方法）
     echo "遅延設定: ${delay_ms}ms"
-    # ルーターコンテナ内でtc設定を実行
-    docker exec network-router ./tc_setup.sh eth0 100mbit "${delay_ms}ms" 0% || true
+    # サーバーコンテナ内でtc設定を実行（実機と同じ5Mbps帯域に設定）
+    docker exec http3-server ./tc_setup.sh eth0 5mbit "${delay_ms}ms" 0% || true
     sleep 0.7
 }
 
