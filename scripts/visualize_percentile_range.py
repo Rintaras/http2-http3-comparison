@@ -8,23 +8,26 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 import matplotlib.font_manager as fm
+import os
 import seaborn as sns
 
 sns.set_style("whitegrid")
 
 plt.rcParams['font.family'] = 'sans-serif'
-available_fonts = [f.name for f in fm.fontManager.ttflist]
-japanese_fonts = ['Hiragino Sans', 'Hiragino Kaku Gothic Pro', 'Yu Gothic', 'Meiryo', 'MS Gothic', 'AppleGothic']
-selected_font = None
-for font in japanese_fonts:
-    if font in available_fonts:
-        selected_font = font
-        break
-
-if selected_font:
-    plt.rcParams['font.sans-serif'] = [selected_font, 'DejaVu Sans']
+if os.environ.get('FAST_PLOT') == '1':
+    plt.rcParams['font.sans-serif'] = ['Hiragino Sans', 'Yu Gothic', 'Meiryo', 'DejaVu Sans']
 else:
-    plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
+    available_fonts = [f.name for f in fm.fontManager.ttflist]
+    japanese_fonts = ['Hiragino Sans', 'Hiragino Kaku Gothic Pro', 'Yu Gothic', 'Meiryo', 'MS Gothic', 'AppleGothic']
+    selected_font = None
+    for font in japanese_fonts:
+        if font in available_fonts:
+            selected_font = font
+            break
+    if selected_font:
+        plt.rcParams['font.sans-serif'] = [selected_font, 'DejaVu Sans']
+    else:
+        plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
 
 plt.rcParams['axes.unicode_minus'] = False
 plt.rcParams['figure.figsize'] = (20, 6)
@@ -68,17 +71,26 @@ def visualize_percentile_range(csv_file, output_dir):
                  marker='o', linewidth=3.5, markersize=12,
                  label=protocol, color=colors[protocol], zorder=3)
 
-        # 主要な遅延ポイントに値を注記（2/50/100/150ms）
-        target_labels = {"2ms", "50ms", "100ms", "150ms"}
+        # 主要な遅延ポイントに値を注記（0/2/50/100/150ms）
+        target_labels = {"0ms", "2ms", "50ms", "100ms", "150ms"}
         for lat, val in zip(latencies, percentile_data[protocol]):
             if lat in target_labels and val is not None and float(val) > 0:
-                ax.annotate(f"{val:.4f}秒",
+                # 数値をより見やすく表示（プロトコルごとに垂直・水平方向にずらして重なりを防ぐ）
+                if protocol == 'HTTP/2':
+                    offset_x = -8  # 左にずらす
+                    offset_y = 20  # 上に配置
+                else:  # HTTP/3
+                    offset_x = 8   # 右にずらす
+                    offset_y = 30  # より上に配置
+                ax.annotate(f"{val:.3f}s",
                             xy=(lat, val),
-                            xytext=(6, -10),
+                            xytext=(offset_x, offset_y),
                             textcoords='offset points',
-                            fontsize=9,
+                            fontsize=11,
+                            fontweight='bold',
                             color=colors[protocol],
-                            bbox=dict(boxstyle='round,pad=0.2', facecolor='white', edgecolor=colors[protocol], alpha=0.7))
+                            ha='center',
+                            bbox=dict(boxstyle='round,pad=0.4', facecolor='white', edgecolor=colors[protocol], linewidth=1.5, alpha=0.9))
 
     # Y軸の範囲を動的に調整
     all_percentiles = []
@@ -98,16 +110,24 @@ def visualize_percentile_range(csv_file, output_dir):
     ax.set_title('P5-P95パーセンタイル範囲の比較', fontsize=18, fontweight='bold', pad=20)
     ax.legend(fontsize=14, loc='upper left', framealpha=0.9)
     ax.grid(True, alpha=0.3, linewidth=1)
-    # X軸ラベルを間引いて表示（10ms刻みで表示）
-    step = 10  # 10ms刻みで表示
+    # X軸に実施したベンチマーク（0/2/50/100/150ms）を明示的に表示
+    benchmark_labels = {"0ms", "2ms", "50ms", "100ms", "150ms"}
     tick_positions = []
     tick_labels = []
-    for i in range(0, len(latencies), step):
-        tick_positions.append(latencies[i])
-        tick_labels.append(latencies[i])
+    
+    # 実施したベンチマークの遅延値を優先的に表示
+    for lat in latencies:
+        if lat in benchmark_labels:
+            tick_positions.append(lat)
+            tick_labels.append(lat)
+        elif len(tick_positions) == 0 or (lat != latencies[0] and int(lat.replace("ms", "")) - int(tick_positions[-1].replace("ms", "")) >= 10):
+            # ベンチマーク以外は10ms刻みで間引く
+            tick_positions.append(lat)
+            tick_labels.append(lat)
     
     ax.set_xticks(tick_positions)
-    ax.set_xticklabels(tick_labels, fontsize=10)
+    # X軸ラベルを回転させて重なりを防ぐ
+    ax.set_xticklabels(tick_labels, fontsize=11, fontweight='bold', rotation=45, ha='right')
     ax.tick_params(axis='y', labelsize=12)
     
     # レイアウトを調整
