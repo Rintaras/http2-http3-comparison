@@ -25,10 +25,12 @@ else
 fi
 ITERATIONS="${ITERATIONS:-25}"
 SLEEP_BETWEEN_SEC=0.1
+BANDWIDTH="${BANDWIDTH:-5mbit}"  # 帯域設定（デフォルト: 5Mbps）
 
-# ログディレクトリ作成
+# ログディレクトリ作成（帯域情報を含める）
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-LOG_DIR="logs/docker_realistic_${TIMESTAMP}"
+BANDWIDTH_SUFFIX=$(echo "$BANDWIDTH" | sed 's/mbit//')
+LOG_DIR="logs/docker_${BANDWIDTH_SUFFIX}mbit_${TIMESTAMP}"
 mkdir -p "$LOG_DIR"
 
 OUTPUT_CSV="$LOG_DIR/benchmark_results.csv"
@@ -39,6 +41,7 @@ echo "timestamp,protocol,latency,iteration,time_total,speed_kbps,success,http_ve
 echo "========================================="
 echo "Docker環境ベンチマーク開始 (実測的版)"
 echo "========================================="
+echo "帯域: $BANDWIDTH"
 if [ ${#DELAYS[@]} -le 10 ]; then
     echo "遅延条件: ${#DELAYS[@]}個 (${DELAYS[*]}ms)"
 else
@@ -48,9 +51,9 @@ echo "反復回数: $ITERATIONS回"
 echo "出力先: $LOG_DIR"
 echo ""
 
-# Docker Compose起動
+# Docker Compose起動（帯域設定を環境変数で渡す）
 echo "Docker環境を起動中..."
-docker-compose -f docker-compose.router_tc.yml up -d
+BANDWIDTH="$BANDWIDTH" docker-compose -f docker-compose.router_tc.yml up -d
 
 # サービス起動待機
 echo "サービス起動を待機中..."
@@ -177,9 +180,9 @@ function set_docker_latency() {
     local delay_ms="$1"
     
     # Docker環境での遅延設定（サーバーコンテナ内でtc設定を適用、実機環境と同じ方法）
-    echo "遅延設定: ${delay_ms}ms"
-    # サーバーコンテナ内でtc設定を実行（実機と同じ5Mbps帯域に設定）
-    docker exec http3-server ./tc_setup.sh eth0 5mbit "${delay_ms}ms" 0% || true
+    echo "遅延設定: ${delay_ms}ms (帯域: $BANDWIDTH)"
+    # サーバーコンテナ内でtc設定を実行（環境変数で指定された帯域を使用）
+    docker exec http3-server ./tc_setup.sh eth0 "$BANDWIDTH" "${delay_ms}ms" 0% || true
     sleep 0.7
 }
 
