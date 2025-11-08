@@ -2,7 +2,7 @@
 set -uo pipefail
 SERVER_BASE="https://192.168.1.100:8443"
 IFACE="eth0"
-RATE="5mbit"
+RATE="${RATE:-5mbit}"
 ITERATIONS="${ITERATIONS:-25}"
 SLEEP_BETWEEN_SEC="${SLEEP_BETWEEN_SEC:-0.1}"
 DELAYS=($(seq 0 1 150))
@@ -95,11 +95,10 @@ for d in "${DELAYS[@]}"; do
   echo "Delay: ${d}ms"
   echo "=========================================="
   if [ "$d" -eq 0 ]; then
-    echo "Baseline measurement (no delay)"
-  else
-    tc_setup "$d"
-    sleep 0.7
+    echo "Baseline measurement (delay=0ms)"
   fi
+  tc_setup "$d"
+  sleep 0.7
   echo "HTTP/3 ($ITERATIONS iterations)"
   if (( ITERATIONS > 5 )); then
     echo "  First 5 excluded from results"
