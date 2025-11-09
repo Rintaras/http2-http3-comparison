@@ -23,6 +23,33 @@
   - **netem (Network Emulator)** - 遅延・パケット損失エミュレーション
   - **iproute2** - トラフィック制御ツール
 
+### 実機ベンチマークのためのネットワーク設定 (macOS)
+
+実機サーバー (既定では `192.168.1.100`) と macOS を LAN ケーブルで直結する場合、ケーブルを抜き差しすると静的 IP 設定が失われます。以下のスクリプトを使うと、毎回の再接続時に必要な設定を自動で適用できます。
+
+```bash
+sudo scripts/setup_real_machine_network.sh
+```
+
+- 既定値: インターフェース `en9`, ローカル IP `192.168.1.101`, ネットマスク `255.255.255.0`, ネットワーク `192.168.1.0/24`, サーバー IP `192.168.1.100`
+- 引数を指定すれば任意の構成に変更できます: `sudo scripts/setup_real_machine_network.sh <interface> <local_ip> <netmask> <network/prefix> <server_ip>`
+- スクリプトは以下を自動で行います:
+  - `ifconfig` で静的 IP を設定
+  - 既存ルートの削除と `route -n add -net ... -interface ...` の再追加
+  - ARP テーブルのリフレッシュ (`arp -d`) とサーバーへの疎通確認 (ping)
+
+手動で同じ処理を行う場合は、以下を順に実行してください。
+
+```bash
+sudo ifconfig en9 inet 192.168.1.101 netmask 255.255.255.0 up
+sudo route -n delete -net 192.168.1.0/24 2>/dev/null || true
+sudo route -n add -net 192.168.1.0/24 -interface en9
+sudo arp -d 192.168.1.100
+ping -c 2 192.168.1.100
+```
+
+> **Note:** ベンチマーク前に `curl -k -I https://192.168.1.100:8443/1mb` で応答を確認してください。毎回ケーブルを抜き差しした後は、上記スクリプト (またはコマンド) を再実行する必要があります。
+
 ### ベンチマーク
 - **スケジューラー解析** - OS/CPU最適化（cpuset, nice優先度）
 - **統計分析** - 平均、中央値、パーセンタイル（P50/P90/P95/P99）
