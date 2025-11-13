@@ -31,12 +31,14 @@
 sudo scripts/setup_real_machine_network.sh
 ```
 
-- 既定値: インターフェース `en9`, ローカル IP `192.168.1.101`, ネットマスク `255.255.255.0`, ネットワーク `192.168.1.0/24`, サーバー IP `192.168.1.100`
+- インターフェースは自動検出（優先: `en7`, `en9`。アクティブな `en*` があれば順に使用）されます。固定したい場合は第1引数で指定してください。
+- 既定値: ローカル IP `192.168.1.101`, ネットマスク `255.255.255.0`, ネットワーク `192.168.1.0/24`, サーバー IP `192.168.1.100`
 - 引数を指定すれば任意の構成に変更できます: `sudo scripts/setup_real_machine_network.sh <interface> <local_ip> <netmask> <network/prefix> <server_ip>`
 - スクリプトは以下を自動で行います:
   - `ifconfig` で静的 IP を設定
   - 既存ルートの削除と `route -n add -net ... -interface ...` の再追加
   - ARP テーブルのリフレッシュ (`arp -d`) とサーバーへの疎通確認 (ping)
+  - `curl --http2` / Homebrew 版 `curl --http3` を用いた HTTP/2・HTTP/3 疎通確認
 
 手動で同じ処理を行う場合は、以下を順に実行してください。
 
