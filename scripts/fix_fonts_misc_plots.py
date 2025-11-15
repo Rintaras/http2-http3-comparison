@@ -54,7 +54,7 @@ def apply_font():
     plt.rcParams["axes.unicode_minus"] = False
     sns.set_style("whitegrid")
     plt.rcParams["figure.figsize"] = (12, 8)
-    plt.rcParams["font.size"] = 12
+    plt.rcParams["font.size"] = 16
     plt.rcParams["font.weight"] = "bold"
     plt.rcParams["axes.titleweight"] = "bold"
     plt.rcParams["axes.labelweight"] = "bold"
@@ -63,14 +63,14 @@ def apply_font():
 def style_plot(ax, title_text: str, label_text: str, fp: FontProperties):
     line_color = "#2E86AB"
     ax.fill_between([], [], color=line_color, alpha=0.15, zorder=1)  # keep style consistent (no-op placeholder)
-    ax.set_title(title_text, fontsize=18, fontweight="bold", pad=20, fontproperties=fp)
-    ax.set_xlabel("x", fontsize=16, fontweight="bold", fontproperties=fp)
-    ax.set_ylabel("y", fontsize=16, fontweight="bold", fontproperties=fp)
+    ax.set_title(title_text, fontsize=22, fontweight="bold", pad=20, fontproperties=fp)
+    ax.set_xlabel("x", fontsize=18, fontweight="bold", fontproperties=fp)
+    ax.set_ylabel("y", fontsize=18, fontweight="bold", fontproperties=fp)
     ax.grid(True, linewidth=1, alpha=0.3)
     bold_fp = FontProperties(family=fp.get_family(), weight="bold")
-    ax.legend([label_text], fontsize=13, loc="upper right", framealpha=0.9, prop=bold_fp)
+    ax.legend([label_text], fontsize=15, loc="upper right", framealpha=0.9, prop=bold_fp)
     ax.set_xlim(0, 10)
-    ax.tick_params(axis="both", labelsize=12)
+    ax.tick_params(axis="both", labelsize=14)
     # Make tick labels bold explicitly
     for lbl in ax.get_xticklabels() + ax.get_yticklabels():
         lbl.set_fontproperties(bold_fp)
@@ -86,7 +86,7 @@ def annotate_integers(ax, func):
             xytext=(0, 12),
             textcoords="offset points",
             ha="center",
-            fontsize=11,
+            fontsize=13,
             fontweight="bold",
             color=line_color,
             bbox=dict(
