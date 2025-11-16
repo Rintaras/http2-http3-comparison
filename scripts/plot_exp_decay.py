@@ -14,16 +14,18 @@ sns.set_style('whitegrid')
 plt.rcParams['figure.figsize'] = (12, 8)
 plt.rcParams['font.size'] = 12
 
-func = lambda x: 211.61 * np.exp(-0.5511 * x) + 16.04
+# Updated function: y = 236.4 e^{-0.6839 x} + 18.51
+func = lambda x: 236.4 * np.exp(-0.6839 * x) + 18.51
 x = np.linspace(0, 10, 400)
 y = func(x)
 
 fig, ax = plt.subplots(figsize=(12, 8))
 line_color = '#2E86AB'
-ax.plot(x, y, color=line_color, linewidth=3.5, label=r"$y = 211.61 e^{-0.5511x} + 16.04$")
+ax.plot(x, y, color=line_color, linewidth=3.5, label=r"$y = 236.4 e^{-0.6839x} + 18.51$")
 ax.fill_between(x, y, color=line_color, alpha=0.15, zorder=1)
 
-for t in [0, 2, 4, 6, 8, 10]:
+# Annotate integer points 0..10 (including odd numbers)
+for t in range(0, 11):
     y_val = func(t)
     ax.scatter([t], [y_val], color=line_color, s=70, zorder=5)
     ax.annotate(f"{y_val:.2f}",
@@ -36,7 +38,7 @@ for t in [0, 2, 4, 6, 8, 10]:
                 color=line_color,
                 bbox=dict(boxstyle='round,pad=0.35', facecolor='white', edgecolor=line_color, linewidth=1.2, alpha=0.9))
 
-ax.set_title('y = 211.61 e^{-0.5511x} + 16.04 のグラフ', fontsize=18, fontweight='bold', pad=20)
+ax.set_title('y = 236.4 e^{-0.6839x} + 18.51 のグラフ', fontsize=18, fontweight='bold', pad=20)
 ax.set_xlabel('x', fontsize=16, fontweight='bold')
 ax.set_ylabel('y', fontsize=16, fontweight='bold')
 ax.grid(True, linewidth=1, alpha=0.3)
