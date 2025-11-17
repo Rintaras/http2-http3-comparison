@@ -52,6 +52,12 @@ benchmark_results_*.csv
 .env.local
 .env.production
 
+# Python仮想環境
+venv/
+env/
+ENV/
+.venv
+
 # 依存関係
 vendor/
 node_modules/
