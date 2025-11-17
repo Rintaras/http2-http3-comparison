@@ -52,6 +52,14 @@ ping -c 2 192.168.1.100
 
 > **Note:** ベンチマーク前に `curl -k -I https://192.168.1.100:8443/1mb` で応答を確認してください。毎回ケーブルを抜き差しした後は、上記スクリプト (またはコマンド) を再実行する必要があります。
 
+### Python分析ツール
+- **Python 3.8+** - データ分析と可視化
+- **NumPy** - 数値計算
+- **Matplotlib** - グラフ生成
+- **Seaborn** - 統計的可視化
+- **Pandas** - データ分析
+- **SciPy** - 科学計算（最適化、統計）
+
 ### ベンチマーク
 - **スケジューラー解析** - OS/CPU最適化（cpuset, nice優先度）
 - **統計分析** - 平均、中央値、パーセンタイル（P50/P90/P95/P99）
@@ -110,7 +118,29 @@ protocol_comparison/
 
 ## セットアップ
 
-### 1. 証明書の準備
+### 1. Python環境のセットアップ
+
+ベンチマーク結果の可視化と分析にはPython環境が必要です。
+
+```bash
+# 仮想環境の作成（既に存在する場合はスキップ）
+python3 -m venv venv
+
+# 仮想環境の有効化
+source venv/bin/activate
+
+# 依存関係のインストール
+pip install -r requirements.txt
+```
+
+依存関係：
+- `numpy` - 数値計算
+- `matplotlib` - グラフ生成
+- `seaborn` - 統計的可視化
+- `pandas` - データ分析
+- `scipy` - 科学計算
+
+### 2. 証明書の準備
 
 ```bash
 mkcert -install
@@ -121,7 +151,7 @@ cd ..
 
 生成される証明書は`certs/`ディレクトリに保存されます。
 
-### 2. サービス起動
+### 3. サービス起動
 
 #### tcベースルーター（推奨）
 
@@ -135,7 +165,7 @@ BANDWIDTH=10mbit LATENCY=50ms LOSS=0% docker-compose -f docker-compose.router_tc
 docker-compose up -d --build
 ```
 
-### 3. 動作確認
+### 4. 動作確認
 
 ```bash
 docker-compose -f docker-compose.router_tc.yml ps
@@ -144,7 +174,7 @@ docker-compose -f docker-compose.router_tc.yml logs router
 docker exec network-router tc qdisc show dev eth0
 ```
 
-### 4. テストリクエスト
+### 5. テストリクエスト
 
 ```bash
 curl -k --http2 https://localhost:8444/
