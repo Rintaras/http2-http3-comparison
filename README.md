@@ -52,6 +52,21 @@ ping -c 2 192.168.1.100
 
 > **Note:** ベンチマーク前に `curl -k -I https://192.168.1.100:8443/1mb` で応答を確認してください。毎回ケーブルを抜き差しした後は、上記スクリプト (またはコマンド) を再実行する必要があります。
 
+#### 複数帯域をまとめて計測する
+
+実機環境で帯域を切り替えながら連続してベンチマークする場合は、`test_ubuntu_connection/run_benchmark_series.sh` を使用します。
+
+```bash
+cd test_ubuntu_connection
+./run_benchmark_series.sh                # 既定の帯域 (2,4,6,7,8,9 Mbps) を順番に実行
+./run_benchmark_series.sh 3mbit 5mbit    # 任意の帯域を指定
+# または環境変数で指定
+RATES="3mbit 5mbit 10mbit" ./run_benchmark_series.sh
+```
+
+- 各帯域で `run_benchmark.sh` が呼び出され、ログは通常どおり `logs/YYYYMMDD_HHMMSS/` に保存されます。
+- 進捗サマリーは `logs/benchmark_series_YYYYMMDD_HHMMSS.log` に蓄積されます。
+
 ### Python分析ツール
 - **Python 3.8+** - データ分析と可視化
 - **NumPy** - 数値計算
